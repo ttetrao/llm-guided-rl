@@ -1,0 +1,88 @@
+Sei un agente RL sull'ambiente FrozenLake (slippery). Leggi <documentation> e <legend>, fai attenzione a come funziona l'ambiente
+e a cosa serve ogni azione.
+Dopo aver letto la definizione di q-function in <q-definition>, di v-function in <v-definition> e il transition model
+in <transition-model>, il tuo compito è guardare lo stato corrente in <current_state id="xxxx" is_slippery="true">
+(xxxx è il codice da riportare in "code") e i 4 gruppi di esiti già calcolati esplicitamente in
+<left>, <down>, <right>, <up>.
+Ogni <a> contiene un <expected> e due <alternative>: <expected> è la mappa dello stato raggiunto muovendosi
+nella direzione voluta dall'azione; ciascuna <alternative> è la mappa di uno stato raggiunto per slittamento
+(direzioni perpendicolari a quella voluta). Le probabilità degli esiti non sono scritte qui:
+leggile in <documentation> (is_slippery/success_rate) e usale come pesi.
+Per ogni a genera Q dai valori V* come media pesata sugli esiti:
+Q*(s,a) = Σ p(s',r|s,a)·[r + γ·V*(s')], con r=1 se s' è il goal altrimenti r=0, γ=0.99.
+Stima V*(s') da ciascuna mappa esito: V*=0 se s' è una hole (H, terminale), V*∈(0,1) se s' è frozen (F).
+VIETATO stimare V* dalla distanza-Manhattan al goal: quella scorciatoia ignora slittamento e buche.
+Per ogni esito F valuta la geometria sulla mappa, in parole: la H è sulla rotta verso il goal o solo laterale?
+Quante celle calpestabili di fuga ha attorno? Ci sono altre H a pochi passi lungo il percorso?
+Una H laterale con vie aperte penalizza poco, una cella intrappolata o con H sulla rotta penalizza molto.
+Il goal (G) è terminale con r=1.
+Non inferire le transizioni: usa solo le mappe in <expected>/<alternative> e le probabilità lette in <documentation>.
+
+Regole per la stima:
+- comprendi le regole della documentazione (in particolare MDP stocastico slippery e reward r∈{0,1} con r=1 solo sul goal)
+- leggi le definizioni e distingui v_π/q_π (policy generica) da v_*/q_* (policy ottima, max su π)
+- considera un gamma di 0.99 e applica l'equazione di ottimalità come media pesata, non la Bellman di v_π e non la forma deterministica
+- comprendi cosa descrive lo stato (riga r, colonna c, tipo cella ch) e che ogni <a> contiene già tutti i possibili s' divisi in <expected> e <alternative>
+- distingui sempre H (hole, terminale, V*=0) da F (frozen, V*∈(0,1)): non rispondere mai 0 per F se esiste un path al goal
+- penalità hole per V*(F): conta dove sono le H rispetto alla rotta verso il goal (sulla rotta o laterali) e quante vie di fuga ha la cella; non trattare tutte le F adiacenti a una H allo stesso modo
+- i valori devono essere normalizzati (float) in [0,1] (già r=1.0 su goal)
+- IMPORTANTE: se hai dubbi sul funzionamento dell'ambiente o su come si interagisce con l'ambiente e sul tipo di azioni effettuabili rileggi con attenzione la documentazione.
+- in "preliminary analysis" guarda gli esiti in <left>, <down>, <right>, <up> e brevemente scrivi quale azione è quella che rappresenta la policy ottima (deve coincidere con l'azione di valore massimo tra le 4).
+
+Regole per analysis (dentro il JSON, niente altro testo fuori dal JSON):
+- dentro analysis cita tutti e 4 i punti della riga sotto, senza limiti di lunghezza: ogni frase deve servire a uno dei 4 punti, niente altro. Analisi identiche tra azioni diverse rendono la risposta invalida: ogni analysis deve contenere almeno un dettaglio specifico dei suoi esiti.
+- in analysis devi citare esplicitamente: 1) quale definizione (v_* o q_*) e quale equazione di ottimalità, 2) quale fatto di <documentation>/<legend> (slippery, probabilità degli esiti, r=1 solo se s' è goal, H terminale) hai usato, 3) how the transition model contribute to the final value, e 4) il conto esplicito con i numeri di questi esiti (V*(s') di expected e di ciascuna alternative, poi Q* come media pesata con le p lette in <documentation>)
+- per ogni esito dichiara in parole la valutazione geometrica (H sì/no; se F: H sulla rotta o laterale, vie di fuga molte o poche) e spiega come ne segue il V* assegnato, senza tabelle numeriche
+
+IMPORTANTISSIMO:
+Output obbligatorio (solo e unicamente un array di oggetti JSON validi, senza testo prima o dopo, senza markdown, senza "..."):
+[{
+ "code": string,
+ "preliminary analysis": string,
+  "q-function-values": {
+    "left": {
+         "analysis": string,
+         "value": decimal
+    },
+    "down": {
+         "analysis": string,
+         "value": decimal
+    },
+    "right": {
+         "analysis": string,
+         "value": decimal
+    },
+    "up": {
+         "analysis": string,
+         "value": decimal
+    }
+  }
+}, ...]
+
+<v-definition></v-definition>
+<q-definition></q-definition>
+<transition-model></transition-model>
+<documentation></documentation>
+<legend></legend>
+<current_state id="xxxx" is_slippery="true"></current_state>
+<left>
+    <expected></expected>
+    <alternative></alternative>
+    <alternative></alternative>
+</left>
+<down>
+    <expected></expected>
+    <alternative></alternative>
+    <alternative></alternative>
+</down>
+<right>
+    <expected></expected>
+    <alternative></alternative>
+    <alternative></alternative>
+</right>
+<up>
+    <expected></expected>
+    <alternative></alternative>
+    <alternative></alternative>
+</up>
+

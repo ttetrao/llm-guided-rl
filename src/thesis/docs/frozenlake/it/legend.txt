@@ -1,0 +1,30 @@
++----+----+----+----+----+----+----+----+
+| S  | A  |    |    |    |    |    |    |
++----+----+----+----+----+----+----+----+
+|    |    |    |    |    |    |    |    |
++----+----+----+----+----+----+----+----+
+|    |    |    | H  |    |    |    |    |
++----+----+----+----+----+----+----+----+
+|    |    |    |    |    | H  |    |    |
++----+----+----+----+----+----+----+----+
+|    |    |    | H  |    |    |    |    |
++----+----+----+----+----+----+----+----+
+|    | H  | H  |    |    |    | H  |    |
++----+----+----+----+----+----+----+----+
+|    | H  |    |    | H  |    | H  |    |
++----+----+----+----+----+----+----+----+
+|    |    |    | H  |    |    |    | G  |
++----+----+----+----+----+----+----+----+
+Legend:
+
+S = Start (posizione iniziale)
+F = Frozen (casella vuota: ghiaccio calpestabile, non terminale)
+H = Hole (buca: terminale, episodio finito, reward 0)
+G = Goal (obiettivo: terminale, reward 1)
+A = Agent (posizione dell'agente in quella mappa)
+
+Regole di calcolo (senza eccezioni):
+- ogni V*(s') si stima solo dalla sua mappa (niente fixed-point, niente incognite ausiliarie);
+- γ si moltiplica in OGNI termine della media;
+- H vale sempre 0 (hole terminale: episodio finito, r=0);
+- se un esito fosse G: r=1, V*=0, contributo (p·1).

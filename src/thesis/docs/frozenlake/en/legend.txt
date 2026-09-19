@@ -1,0 +1,31 @@
++----+----+----+----+----+----+----+----+
+| S  | A  |    |    |    |    |    |    |
++----+----+----+----+----+----+----+----+
+|    |    |    |    |    |    |    |    |
++----+----+----+----+----+----+----+----+
+|    |    |    | H  |    |    |    |    |
++----+----+----+----+----+----+----+----+
+|    |    |    |    |    | H  |    |    |
++----+----+----+----+----+----+----+----+
+|    |    |    | H  |    |    |    |    |
++----+----+----+----+----+----+----+----+
+|    | H  | H  |    |    |    | H  |    |
++----+----+----+----+----+----+----+----+
+|    | H  |    |    | H  |    | H  |    |
++----+----+----+----+----+----+----+----+
+|    |    |    | H  |    |    |    | G  |
++----+----+----+----+----+----+----+----+
+Legend:
+
+S = Start (initial position)
+F = Frozen (empty cell: walkable ice, non-terminal)
+H = Hole (terminal, episode over, reward 0)
+G = Goal (terminal, reward 1)
+A = Agent (agent position in that map)
+
+Computation rules (no exceptions):
+- each V*(s') is estimated only from its map (no fixed-point, no auxiliary unknowns);
+- γ multiplies EVERY term of the average;
+- H is always 0 (terminal hole: episode over, r=0);
+- if an outcome were G: r=1, V*=0, contribution (p·1).
+

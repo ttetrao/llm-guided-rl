@@ -1,0 +1,42 @@
++----+----+----+----+----+----+
+|    |    |    | ▇  |    |    |
++----+----+----+----+----+----+
+|    |    |    | ▇  |    |    |
++----+----+----+----+----+----+
+|    |    |    | ▇  |    |    |
++----+----+----+----+----+----+
+|    |    |    | ▇  |    |    |
++----+----+----+----+----+----+
+|    |    |L(R)|D(O)|    |    |
++----+----+----+----+----+----+
+|    |    |    | ▇  |    | G  |
++----+----+----+----+----+----+
+...
+Legend:
+
+A(U) = Agent (up)
+A(D) = Agent (down)
+A(R) = Agent (right)
+A(L) = Agent (left)
+
+K = Key
+
+L(U) = Agent (loaded) (up)
+L(D) = Agent (loaded) (down)
+L(R) = Agent (loaded) (right)
+L(L) = Agent (loaded) (left)
+
+
+▇ = wall (not traversable)
+
+D = door (traversable, can be opened only by L - agent with key)
+
+D(L) = door (locked)
+D(O) = door (open)
+
+
+Stage:
+FIND_KEY = "find_key"
+OPEN_DOOR = "open_door"
+REACH_GOAL = "reach_goal"
+

@@ -1,0 +1,88 @@
+You are an RL agent in the FrozenLake (slippery) environment. Read <documentation> and <legend>, paying attention to how the environment
+works and what each action is for.
+After reading the q-function definition in <q-definition>, the v-function definition in <v-definition> and the transition model
+in <transition-model>, your task is to look at the current state in <current_state id="xxxx" is_slippery="true">
+(xxxx is the code to report in "code") and the 4 outcome groups already computed explicitly in
+<left>, <down>, <right>, <up>.
+Each <a> contains one <expected> and two <alternative> tags: <expected> is the map of the state reached by moving
+in the intended direction of the action; each <alternative> is the map of a state reached through slippage
+(directions perpendicular to the intended one). The outcome probabilities are not written here:
+read them in <documentation> (is_slippery/success_rate) and use them as weights.
+For each a generate Q from the V* values as a weighted average over the outcomes:
+Q*(s,a) = Σ p(s',r|s,a)·[r + γ·V*(s')], with r=1 if s' is the goal otherwise r=0, γ=0.99.
+Estimate V*(s') from each outcome map: V*=0 if s' is a hole (H, terminal), V*∈(0,1) if s' is frozen (F).
+FORBIDDEN to estimate V* from Manhattan distance to the goal: that shortcut ignores slippage and holes.
+For each F outcome assess the geometry on the map, in words: is any H on the route to the goal or only lateral?
+How many walkable escape cells surround it? Are there further holes a few steps along the path?
+A lateral H with open escapes penalizes little, a trapped cell or one with H on-route penalizes heavily.
+The goal (G) is terminal with r=1.
+
+
+Estimation rules:
+- understand the rules in the documentation (in particular the slippery stochastic MDP and reward r∈{0,1} with r=1 only on the goal)
+- read the definitions and distinguish v_π/q_π (generic policy) from v_*/q_* (optimal policy, max over π)
+- consider a gamma of 0.99 and apply the optimality equation as a weighted average, not the v_π Bellman equation and not the deterministic form
+- understand what the state describes (row r, column c, cell type ch) and that each <a> already contains all possible s' split into <expected> and <alternative>
+- always distinguish H (hole, terminal, V*=0) from F (frozen, V*∈(0,1)): never answer 0 for F if a path to the goal exists
+- hole penalty for V*(F): count where the holes sit relative to the route to the goal (on-route or lateral) and how many escape ways the cell has; never treat all H-adjacent F cells alike
+- values must be normalized (float) in [0,1] (r=1.0 on goal already)
+- IMPORTANT: if you have doubts about how the environment works or how to interact with it and what actions can be performed, re-read the documentation carefully.
+
+
+Analysis rules (inside the JSON, no other text outside the JSON):
+- inside analysis cover all 4 points below, no length limits: every sentence must serve one of the 4 points, nothing else. Identical analyses across different actions invalidate the response: each analysis must contain at least one detail specific to its outcomes.
+- in analysis you must explicitly cite: 1) which definition (v_* or q_*) and which optimality equation, 2) which fact from <documentation>/<legend> (slippery, outcome probabilities, r=1 only if s' is goal, terminal H) you used, 3) how the transition model contribute to the final value, and 4) the explicit computation with the numbers of these outcomes (V*(s') of expected and of each alternative, then Q* as a weighted average with the p read in <documentation>).
+- for each outcome state its geometric assessment in words (hole or not; if frozen: H on-route or lateral, many or few escape ways) and explain how the assigned V* follows from it, without numeric tables.
+- If you have to estimate V values you have to use the formulas.
+
+VERY IMPORTANT:
+Mandatory output (solely and exclusively an array of valid JSON objects, with no text before or after, no markdown, no "..."):
+[{
+ "code": string,
+  "q-function-values": {
+    "left": {
+         "analysis": string,
+         "value": decimal
+    },
+    "down": {
+         "analysis": string,
+         "value": decimal
+    },
+    "right": {
+         "analysis": string,
+         "value": decimal
+    },
+    "up": {
+         "analysis": string,
+         "value": decimal
+    }
+  }
+}]
+
+<v-definition></v-definition>
+<q-definition></q-definition>
+<transition-model></transition-model>
+<documentation></documentation>
+<legend></legend>
+<current_state id="xxxx" is_slippery="true"></current_state>
+<left>
+    <expected></expected>
+    <alternative></alternative>
+    <alternative></alternative>
+</left>
+<down>
+    <expected></expected>
+    <alternative></alternative>
+    <alternative></alternative>
+</down>
+<right>
+    <expected></expected>
+    <alternative></alternative>
+    <alternative></alternative>
+</right>
+<up>
+    <expected></expected>
+    <alternative></alternative>
+    <alternative></alternative>
+</up>
+
