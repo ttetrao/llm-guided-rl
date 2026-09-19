@@ -2,9 +2,9 @@
 """LLM-init (iperparametri miei) vs vanilla stessi-hp vs vanilla standard, un unico grafico.
 
 Uso:
-    python3 -m thesis.agent.doorkey_qtable_llminit2 --input <llm_results>.json --seed 1337 \\
+    python3 -m agent.doorkey_qtable_llminit2 --input <llm_results>.json --seed 1337 \\
         --episodes 1500 --alpha 0.5 --gamma 0.9 --compare
-    python3 -m thesis.agent.doorkey_qtable_llminit2 --input ... --seed 1337
+    python3 -m agent.doorkey_qtable_llminit2 --input ... --seed 1337
         # senza --compare: sola run LLM-init con i miei hparams
 
 --compare, 3 run a pari episodi/seed/max_steps (asse x confrontabile):
@@ -116,7 +116,7 @@ def main():
                            plot=None)
     stem = make_stem(file_seeds, seed, args.tag)
     if load_opt_mdp is None:
-        print("WARN: thesis.graph non importabile, metriche policy ottima saltate")
+        print("WARN: graph non importabile, metriche policy ottima saltate")
         opt_mdp = None
     else:
         opt_mdp = load_opt_mdp(seed=seed, size=8, out_dir=DATA_DIR)

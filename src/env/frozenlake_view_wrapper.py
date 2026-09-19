@@ -55,7 +55,7 @@ class FrozenLakeViewSystem(gym.Wrapper):
         r, c = divmod(s, ncol)
 
         # build ascii grid inner (no outer walls as FrozenLake has no walls)
-        # use same style as thesis docs: +----+ per cell
+        # use same style as docs: +----+ per cell
         lines: list[str] = []
         border = "+" + "----+" * ncol
         for rr in range(nrow):

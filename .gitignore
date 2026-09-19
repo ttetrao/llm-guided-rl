@@ -8,10 +8,10 @@ __pycache__/
 *.pkl
 
 # thesis generated data (rigenerabili, fuori da git)
-src/thesis/graph/data/
-src/thesis/evaluate/output/
-src/thesis/evaluate/output_frozenlake/
-src/thesis/evaluate/training result/
+src/graph/data/
+src/evaluate/output/
+src/evaluate/output_frozenlake/
+src/evaluate/training result/
 
 # latex build
 *.aux

@@ -8,8 +8,8 @@ Q-learning tabulare su FrozenLake slippery per bucket iniziale/intermedio/avanza
 - Cache pickle/json analogo a qlearning_states.py
 
 Uso:
-    python -m thesis.graph.frozenlake_qlearning_states --map 8x8 --seed 1337
-    python -m thesis.graph.frozenlake_qlearning_states --map 8x8 --seed 1337 --force
+    python -m graph.frozenlake_qlearning_states --map 8x8 --seed 1337
+    python -m graph.frozenlake_qlearning_states --map 8x8 --seed 1337 --force
 """
 
 from __future__ import annotations
@@ -18,13 +18,13 @@ from collections import deque, defaultdict
 from pathlib import Path
 
 _THIS = Path(__file__).resolve()
-_SRC = _THIS.parents[2]
+_SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 import numpy as np
 import gymnasium as gym
-from thesis.graph.frozenlake_mdp_graph import get_paths as get_mdp_paths, load_or_build
+from graph.frozenlake_mdp_graph import get_paths as get_mdp_paths, load_or_build
 
 BUCKETS = ["iniziale", "intermedio", "avanzato"]
 BOTTLENECK_LABEL = "bottleneck"

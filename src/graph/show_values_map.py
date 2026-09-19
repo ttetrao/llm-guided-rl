@@ -9,9 +9,9 @@ Mappa ASCII con V-true / V-llm + tipo casella, per DoorKey e FrozenLake.
 - I grafi MDP vengono riusati dalla cache o rigenerati se assenti (--force per forzare).
 
 Uso:
-    python -m thesis.graph.show_values_map --env doorkey --seed 1337
-    python -m thesis.graph.show_values_map --env frozenlake --map 8x8 --seed 1337
-    python -m thesis.graph.show_values_map --env doorkey --llm thesis/graph/data/altro.json --force
+    python -m graph.show_values_map --env doorkey --seed 1337
+    python -m graph.show_values_map --env frozenlake --map 8x8 --seed 1337
+    python -m graph.show_values_map --env doorkey --llm graph/data/altro.json --force
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 _THIS = Path(__file__).resolve()
-_SRC = _THIS.parents[2]
+_SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
@@ -76,7 +76,7 @@ def _fmt(vt: float | None, vl: float | None) -> str:
 
 
 def show_doorkey(seed: int, size: int, llm: str | None, force: bool):
-    from thesis.graph.mdp_graph import load_or_build
+    from graph.mdp_graph import load_or_build
 
     mdp = load_or_build(seed=seed, size=size, force=force)
     gi = mdp["grid_info"]
@@ -127,7 +127,7 @@ def show_doorkey(seed: int, size: int, llm: str | None, force: bool):
 
 
 def show_frozenlake(map_name: str, seed: int, llm: str | None, force: bool):
-    from thesis.graph.frozenlake_mdp_graph import load_or_build
+    from graph.frozenlake_mdp_graph import load_or_build
 
     mdp = load_or_build(seed=seed, map_name=map_name, force=force)
     nrow, ncol = mdp["nrow"], mdp["ncol"]

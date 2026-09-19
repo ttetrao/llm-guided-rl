@@ -15,7 +15,7 @@ Input multi-seed (envelope con seeds in cima): senza --seed allena su tutti i
 seed del file (1 seed/episodio, --train-seeds per sottoinsieme) e doppia eval
 finale su --eval-in-seed (default primo train) + --eval-new-seed nuovo
 (default max(train)+1 libero).
-Output: thesis/graph/data/qtable_llminit_seed_X[_tag].json + .png plots.
+Output: graph/data/qtable_llminit_seed_X[_tag].json + .png plots.
 """
 import argparse
 import json
@@ -37,7 +37,7 @@ from doorkey_ddqn_pretrained import DATA_DIR, resolve_input  # noqa: E402
 from doorkey_ddqn_pretrained import ACTION_IDX, STAGE_IDX, STAGE_TARGET  # noqa: E402
 
 try:  # policy ottima da VI (solo metriche; fallisce solo fuori dal package)
-    from thesis.graph.mdp_graph import load_or_build as load_opt_mdp
+    from graph.mdp_graph import load_or_build as load_opt_mdp
 except ImportError:
     load_opt_mdp = None  # type: ignore
 
@@ -564,7 +564,7 @@ def main():
     ap = argparse.ArgumentParser(
         description="Q-Learning tabulare standard con init Q=V_LLM")
     ap.add_argument("--input", default=None,
-                    help="file JSON in thesis/graph/data/ (o path)")
+                    help="file JSON in graph/data/ (o path)")
     ap.add_argument("--episodes", type=int, default=3000)
     ap.add_argument("--alpha", type=float, default=0.15)
     ap.add_argument("--gamma", type=float, default=0.99)
@@ -702,7 +702,7 @@ def main():
     env = DoorKeyViewSystem(gym.make("MiniGrid-DoorKey-8x8-v0"))
     n_actions = int(env.action_space.n)
     if load_opt_mdp is None:
-        print("WARN: thesis.graph non importabile, metriche policy ottima saltate")
+        print("WARN: graph non importabile, metriche policy ottima saltate")
         opt_mdp = None
     else:
         opt_mdp = load_opt_mdp(seed=seed, size=8, out_dir=DATA_DIR)

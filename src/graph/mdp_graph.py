@@ -7,13 +7,13 @@ MDP completo deterministico per MiniGrid-DoorKey (6/8/16).
 - Salva pickle (veloce) + json (leggibile), oppure carica se esiste
 - Accesso indicizzato O(1) via dict state->id
 
-Ispirato a thesis/bak/scripts/state_export2.py per transizioni/stage/value.
-Legenda mappa in thesis/env/view_wrapper.py:151
+Ispirato a bak/scripts/state_export2.py per transizioni/stage/value.
+Legenda mappa in env/view_wrapper.py:151
 
 Uso:
-    python -m thesis.graph.mdp_graph --seed 42 --size 8
-    python -m thesis.graph.mdp_graph --seed 42 --size 8 --force
-    from thesis.graph import load_or_build
+    python -m graph.mdp_graph --seed 42 --size 8
+    python -m graph.mdp_graph --seed 42 --size 8 --force
+    from graph import load_or_build
     mdp = load_or_build(seed=42, size=8)  # dict con nodes/index/adj
 """
 from __future__ import annotations
@@ -28,13 +28,13 @@ from pathlib import Path
 # Path setup per esecuzione sia come modulo che come script
 # ---------------------------------------------------------------------------
 _THIS = Path(__file__).resolve()
-# src/thesis/graph/mdp_graph.py -> src/
-_SRC = _THIS.parents[2]
+# src/graph/mdp_graph.py -> src/
+_SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 import gymnasium as gym
-from thesis.env.view_wrapper import Stage, DoorKeyViewSystem
+from env.view_wrapper import Stage, DoorKeyViewSystem
 
 # ---------------------------------------------------------------------------
 # Costanti
@@ -44,7 +44,7 @@ ACTIONS = [0, 1, 2, 3, 4, 5]  # left, right, forward, pickup, drop, toggle (done
 ACTIONS_ALL = [0, 1, 2, 3, 4, 5, 6]  # tutte le azioni MiniGrid (incl. done)
 ACTION_NAMES = {0: "left", 1: "right", 2: "forward", 3: "pickup", 4: "drop", 5: "toggle", 6: "done"}
 GAMMA = 0.99
-DIR_SYM = ["R", "D", "L", "U"]  # thesis/env/view_wrapper.py:161
+DIR_SYM = ["R", "D", "L", "U"]  # env/view_wrapper.py:161
 
 
 # ---------------------------------------------------------------------------
@@ -191,12 +191,12 @@ def _value_iteration(gi, gamma=GAMMA, theta=1e-6, actions=None):
 
 # ---------------------------------------------------------------------------
 # Render mappa per stato arbitrario (senza mutare env)
-# replica thesis/env/view_wrapper.py:151 ma parametrica su state
+# replica env/view_wrapper.py:151 ma parametrica su state
 # ---------------------------------------------------------------------------
 def render_map(state, gi) -> str:
     """
     Ritorna la mappa ASCII per lo stato dato.
-    Legenda (thesis/env/view_wrapper.py + richiesta):
+    Legenda (env/view_wrapper.py + richiesta):
       A(U/D/R/L)=agent, L(U/D/R/L)=agent con chiave,
       K=key, G=goal, ▇=wall, D(L)=door locked / D(C) alias, D(O)=door open
     Nota: view_wrapper usa D(C) per locked, richiesta usa D(L);
@@ -466,7 +466,7 @@ def main():
     parser.add_argument("--seed", type=int, default=1337, help="seed ambiente (nel nome file)")
     parser.add_argument("--size", type=int, default=8, choices=[6, 8, 16], help="dimensione mappa (default 8)")
     parser.add_argument("--gamma", type=float, default=GAMMA, help="gamma incluso nel dump per completezza")
-    parser.add_argument("--out", type=str, default=None, help="cartella output (default thesis/graph/data)")
+    parser.add_argument("--out", type=str, default=None, help="cartella output (default graph/data)")
     parser.add_argument("--force", action="store_true", help="rigenera anche se esiste")
     parser.add_argument("--show", type=int, default=2, help="quante mappe di esempio stampare")
     args = parser.parse_args()

@@ -1,6 +1,6 @@
 # Inizializzare l'apprendimento per rinforzo con stime di un LLM: il caso MiniGrid-DoorKey
 
-Appunti strutturati per la tesi. Tutti i numeri riportati sono misurati sui file in `src/thesis/graph/data/` e `src/thesis/evaluate/output/`; i riferimenti al codice indicano il file e la riga.
+Appunti strutturati per la tesi. Il corpo (§1-§11) è sul caso MiniGrid-DoorKey; l'appendice §12 descrive l'architettura FrozenLake senza numeri (dati non versionati). Tutti i numeri DoorKey riportati sono misurati sui file in `src/graph/data/` e `src/evaluate/output/`; i riferimenti al codice indicano il file e la riga. Comandi da `src/`: `python3 -m graph.<modulo>`, `python3 -m llm.<modulo>`, `python3 -m evaluate.<modulo>`, `python3 -m agent.<modulo>`.
 
 ## 1. Problema
 
@@ -10,13 +10,13 @@ In ambienti con reward sparso il Q-learning tabellare impiega molti episodi prim
 
 L'ambiente è `MiniGrid-DoorKey-8x8-v0`. L'agente deve raccogliere la chiave, aprire la porta e raggiungere il goal. Lo stato è la quintupla `(x, y, dir, has_key, door_open)`; le azioni utili sono sei (`left, right, forward, pickup, drop, toggle`, l'azione `done` è un self-loop e viene esclusa dalle query). Il reward è 1 solo entrando nella cella goal, 0 altrove; gli episodi sono troncati a 450 passi negli esperimenti con agente (1000 nel pilota su grafo).
 
-Poiché layout e dinamica sono deterministici a meno del seed, il lavoro costruisce una volta sola il grafo completo dell'MDP (`src/thesis/graph/mdp_graph.py`): enumerazione degli stati validi, transizione deterministica per ognuna delle 7 azioni, reward e flag `done` per arco. Sul seed 1337 il grafo ha 480 nodi (chiave in (3,3), porta in (4,3), goal in (6,6), partenza in (3,5), 33 muri). La `V*` di riferimento è calcolata con value iteration (`_value_iteration`, `mdp_graph.py:150`) con gamma 0.99. Questo fornisce la verità di base contro cui si giudicano sia il pilota di raccolta stati sia le stime dell'LLM.
+Poiché layout e dinamica sono deterministici a meno del seed, il lavoro costruisce una volta sola il grafo completo dell'MDP (`src/graph/mdp_graph.py`): enumerazione degli stati validi, transizione deterministica per ognuna delle 7 azioni, reward e flag `done` per arco. Sul seed 1337 il grafo ha 480 nodi (chiave in (3,3), porta in (4,3), goal in (6,6), partenza in (3,5), 33 muri). La `V*` di riferimento è calcolata con value iteration (`_value_iteration`, `mdp_graph.py:150`) con gamma 0.99. Questo fornisce la verità di base contro cui si giudicano sia il pilota di raccolta stati sia le stime dell'LLM.
 
-Gli stadi di avanzamento (`src/thesis/env/view_wrapper.py`) sono tre: `find_key`, `open_door`, `reach_goal`, derivati direttamente da posizione e flag dello stato.
+Gli stadi di avanzamento (`src/env/view_wrapper.py`) sono tre: `find_key`, `open_door`, `reach_goal`, derivati direttamente da posizione e flag dello stato.
 
 ## 3. Selezione degli stati
 
-Interrogare l'LLM su tutti i 480 stati costerebbe troppo e servirebbe a poco: la maggior parte degli stati è corridoio. Con un budget di 150 stati la selezione (`src/thesis/graph/doorkey_states.py`) combina due sorgenti complementari: stati che per struttura obbligano una decisione, e stati che il learner ha effettivamente attraversato mentre imparava. I primi non dipendono da alcun training, i secondi sì.
+Interrogare l'LLM su tutti i 480 stati costerebbe troppo e servirebbe a poco: la maggior parte degli stati è corridoio. Con un budget di 150 stati la selezione (`src/graph/doorkey_states.py`) combina due sorgenti complementari: stati che per struttura obbligano una decisione, e stati che il learner ha effettivamente attraversato mentre imparava. I primi non dipendono da alcun training, i secondi sì.
 
 ### 3.1 Le sei famiglie di colli di bottiglia
 
@@ -64,17 +64,17 @@ Gli script di interrogazione non prendono necessariamente tutto il pool: leggono
 
 ### 3.6 Il precedente a bucket, e perché è stato sostituito
 
-Prima di questo schema esisteva una selezione per fasi di apprendimento (`src/thesis/graph/qlearning_states.py`): tre bucket — iniziale, intermedio, avanzato — per success rate 0-0.33, 0.33-0.8 e 0.8-1.0, con al massimo 100 stati visitati campionati a caso per bucket e un sottoinsieme garantito di stati critici (cambi di stadio o terminali effettivamente calpestati, righe 213-222), con opzione `significant_only` per tenere solo quelli. Il problema di quell'approccio è che i bucket per fase mescolano punti decisionali e corridoio senza distinzione, e dipendono interamente dalla traiettoria del pilota. Lo schema attuale separa le due cose: i bottleneck fissano dove stanno le decisioni indipendentemente da come si impara, i checkpoint fotografano cosa si vede mentre si impara. Il vecchio modulo resta nel perimetro solo come dipendenza, perché fornisce `QLearningAgent` al pilota.
+Prima di questo schema esisteva una selezione per fasi di apprendimento (`src/graph/qlearning_states.py`): tre bucket — iniziale, intermedio, avanzato — per success rate 0-0.33, 0.33-0.8 e 0.8-1.0, con al massimo 100 stati visitati campionati a caso per bucket e un sottoinsieme garantito di stati critici (cambi di stadio o terminali effettivamente calpestati, righe 213-222), con opzione `significant_only` per tenere solo quelli. Il problema di quell'approccio è che i bucket per fase mescolano punti decisionali e corridoio senza distinzione, e dipendono interamente dalla traiettoria del pilota. Lo schema attuale separa le due cose: i bottleneck fissano dove stanno le decisioni indipendentemente da come si impara, i checkpoint fotografano cosa si vede mentre si impara. Il vecchio modulo resta nel perimetro solo come dipendenza, perché fornisce `QLearningAgent` al pilota.
 
 ## 4. Stima dei valori con l'LLM
 
-Il protocollo è Q-via-V (`src/thesis/llm/query_gemma.py`, `query_gpt.py`; prompt in `src/thesis/docs/doorkey/it/prompt.txt`). Per ogni stato il prompt mostra la mappa ASCII dello stato corrente e, già calcolate, le mappe dei sei successori `s' = T(s,a)`: il modello non deve inferire le transizioni, deve solo stimare `V*(s')` come `gamma^d` con `d` passi al goal e restituire `Q(s,a) = r + 0.99 * V*(s')`. L'output è JSON vincolato, con un'analisi per azione che cita definizione usata, fatto dell'ambiente e conto esplicito; analisi identiche tra azioni diverse invalidano la risposta.
+Il protocollo è Q-via-V (`src/llm/query_gemma.py`, `query_gpt.py`; prompt in `src/docs/doorkey/it/prompt.txt`). Per ogni stato il prompt mostra la mappa ASCII dello stato corrente e, già calcolate, le mappe dei sei successori `s' = T(s,a)`: il modello non deve inferire le transizioni, deve solo stimare `V*(s')` come `gamma^d` con `d` passi al goal e restituire `Q(s,a) = r + 0.99 * V*(s')`. L'output è JSON vincolato, con un'analisi per azione che cita definizione usata, fatto dell'ambiente e conto esplicito; analisi identiche tra azioni diverse invalidano la risposta.
 
 Modelli interrogati: `gemma-4-26b-a4b-it` (28 stati, 168 righe: run parziale) e `gpt-oss 120b` (145 stati, 870 righe: copertura completa dei 150 stati del pool). Una richiesta per stato, pacing di 65 secondi tra gli avvii, 3 tentativi, deduplica su file: il collo è la latenza delle API, non il calcolo.
 
 ## 5. Qualità delle stime
 
-La valutazione (`src/thesis/evaluate/evaluate_llm.py`, esiti in `src/thesis/evaluate/output/log_valutazione.txt`) confronta `v_llm` con `v_true = V*(s')` su tre piani: valori (MAE, RMSE, Pearson, Spearman, CCC con intervalli bootstrap), selezione dell'azione (accuratezza tie-aware: la scelta è corretta se una qualsiasi delle azioni a pari merito quantizzate su `gamma^k` è ottima) e regret come metrica primaria.
+La valutazione (`src/evaluate/evaluate_llm.py`, esiti in `src/evaluate/output/log_valutazione.txt`) confronta `v_llm` con `v_true = V*(s')` su tre piani: valori (MAE, RMSE, Pearson, Spearman, CCC con intervalli bootstrap), selezione dell'azione (accuratezza tie-aware: la scelta è corretta se una qualsiasi delle azioni a pari merito quantizzate su `gamma^k` è ottima) e regret come metrica primaria.
 
 | modello | stati | MAE | Pearson r | Top-1 tie-aware | regret medio |
 |---|---|---|---|---|---|
@@ -85,7 +85,7 @@ Il 97% delle stime cade entro 0.05 dal vero e il bias è sistematicamente negati
 
 ## 6. Inizializzazione del Q-learning e speedup
 
-L'agente (`src/thesis/agent/doorkey_qtable_llminit.py`) lavora in coordinate relative al bersaglio di stadio `(dx, dy, dir, stage)` (`doorkey_state.py:14`), così gli stati di seed diversi con la stessa geometria relativa condividono la riga della tabella. Le righe `(stato, azione, v_llm)` vengono aggregate per media e scritte nella Q-table sulle coppie coperte, il resto parte da zero; l'apprendimento resta Q-learning ordinario. Confronto a parità di iperparametri (1500 episodi, alpha 0.2, gamma 0.95, epsilon con decadimento 0.99, seed 1337, stime di gpt-oss 120b):
+L'agente (`src/agent/doorkey_qtable_llminit.py`) lavora in coordinate relative al bersaglio di stadio `(dx, dy, dir, stage)` (`doorkey_state.py:14`), così gli stati di seed diversi con la stessa geometria relativa condividono la riga della tabella. Le righe `(stato, azione, v_llm)` vengono aggregate per media e scritte nella Q-table sulle coppie coperte, il resto parte da zero; l'apprendimento resta Q-learning ordinario. Confronto a parità di iperparametri (1500 episodi, alpha 0.2, gamma 0.95, epsilon con decadimento 0.99, seed 1337, stime di gpt-oss 120b):
 
 | init | coppie inizializzate | primo successo (ep.) | SR ultimi 100 ep. | SR eval (100 ep.) | passi medi a convergenza |
 |---|---|---|---|---|---|
@@ -117,7 +117,7 @@ Addestrando su 5 seed con rappresentazione relativa e valutando sul primo seed d
 
 ## 8. Esperimento DDQN: esito negativo
 
-La stessa idea è stata provata con approssimazione di funzione (`src/thesis/agent/doorkey_ddqn_pretrained.py`): regressione supervisionata della rete sui valori LLM (MSE finale 0.003 dopo 500 epoche) seguita da 3000 episodi online con transizioni esperte permanenti nel replay. Risultato: 965 successi su 3000 episodi ma SR 0.00 in valutazione su 200 episodi. La rete imita i valori senza stabilizzare la policy greedy sotto reward sparso. Il contrasto con il caso tabellare è istruttivo: l'inizializzazione aiuta l'esplorazione, non sostituisce la convergenza dell'approssimatore.
+La stessa idea è stata provata con approssimazione di funzione (`src/agent/doorkey_ddqn_pretrained.py`): regressione supervisionata della rete sui valori LLM (MSE finale 0.003 dopo 500 epoche) seguita da 3000 episodi online con transizioni esperte permanenti nel replay. Risultato: 965 successi su 3000 episodi ma SR 0.00 in valutazione su 200 episodi. La rete imita i valori senza stabilizzare la policy greedy sotto reward sparso. Il contrasto con il caso tabellare è istruttivo: l'inizializzazione aiuta l'esplorazione, non sostituisce la convergenza dell'approssimatore.
 
 ## 9. Limiti
 
@@ -125,15 +125,15 @@ Primo, copertura: 150 stati su 480 bastano per DoorKey 8x8 ma la frazione utile 
 
 ## 10. Mappa dei file citati
 
-- `src/thesis/graph/mdp_graph.py` — grafo MDP completo e `V*` via value iteration.
-- `src/thesis/graph/doorkey_states.py` — bottleneck strutturali (riga 83), pilota con checkpoint (riga 141), budget con resti maggiori (righe 216-242).
-- `src/thesis/graph/qlearning_states.py` — precedente approccio a bucket; resta come dipendenza (fornisce `QLearningAgent` al pilota).
-- `src/thesis/llm/query_gemma.py`, `query_gpt.py` — interrogazione dei modelli.
-- `src/thesis/docs/doorkey/{it,en}/` — prompt, legenda, definizioni di `v_*` e `q_*`.
-- `src/thesis/evaluate/evaluate_llm.py` — metriche su valori, azioni e regret; `evaluate/output/` contiene grafici e `log_valutazione.txt`.
-- `src/thesis/agent/doorkey_qtable_llminit.py`, `doorkey_state.py` — Q-learning con init da LLM; `doorkey_ddqn_pretrained.py`, `doorkey_ddqn.py`, `ExperienceReplayBuffer.py` — ramo DDQN. Comando dello sweep (sezione 6.1), da `src/`: `python3 -m thesis.agent.doorkey_qtable_llminit --input llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b.json --seed 1337 --episodes 1500 --eps_decay 0.99 --eps_min 0.05 --max_steps 450 --eval_episodes 100 --no_plot --alpha A --gamma G --tag sweep_aAgG`; gli esiti sono in `graph/data/qtable_llminit_seed_1337_sweep_*.json`.
-- `src/thesis/env/view_wrapper.py`, `doorkey_events.py` — stadi e osservazione.
-- `src/stash/` — tutto il materiale escluso dal perimetro (FrozenLake, varianti di agenti superate, backup): non citato sopra.
+- `src/graph/mdp_graph.py` — grafo MDP completo e `V*` via value iteration.
+- `src/graph/doorkey_states.py` — bottleneck strutturali (riga 83), pilota con checkpoint (riga 141), budget con resti maggiori (righe 216-242).
+- `src/graph/qlearning_states.py` — precedente approccio a bucket; resta come dipendenza (fornisce `QLearningAgent` al pilota).
+- `src/llm/query_gemma.py`, `query_gpt.py` — interrogazione dei modelli.
+- `src/docs/doorkey/{it,en}/` — prompt, legenda, definizioni di `v_*` e `q_*`.
+- `src/evaluate/evaluate_llm.py` — metriche su valori, azioni e regret; `evaluate/output/` contiene grafici e `log_valutazione.txt`.
+- `src/agent/doorkey_qtable_llminit.py`, `doorkey_state.py` — Q-learning con init da LLM; `doorkey_ddqn_pretrained.py`, `doorkey_ddqn.py`, `ExperienceReplayBuffer.py` — ramo DDQN. Comando dello sweep (sezione 6.1), da `src/`: `python3 -m agent.doorkey_qtable_llminit --input llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b.json --seed 1337 --episodes 1500 --eps_decay 0.99 --eps_min 0.05 --max_steps 450 --eval_episodes 100 --no_plot --alpha A --gamma G --tag sweep_aAgG`; gli esiti sono in `graph/data/qtable_llminit_seed_1337_sweep_*.json`.
+- `src/env/view_wrapper.py`, `doorkey_events.py` — stadi e osservazione.
+- FrozenLake (appendice §12): `src/graph/frozenlake_mdp_graph.py`, `frozenlake_qlearning_states.py`, `src/llm/query_frozenlake_{gpt,gemma}.py`, `src/evaluate/evaluate_frozenlake_llm.py`, `src/agent/frozenlake_qtable_llminit{,2}.py`, `frozenlake_state.py`, `src/env/frozenlake_{factory,view_wrapper}.py`, `src/docs/frozenlake/{it,en}/`.
 
 ## 11. Bibliografia ragionata minima
 
@@ -149,4 +149,17 @@ Primo, copertura: 150 stati su 480 bastano per DoorKey 8x8 ma la frazione utile 
 10. Chevalier-Boisvert, M. et al., "MiniGrid & MiniWorld", *NeurIPS 36*, 2023 — riferimento per DoorKey-8x8, reward sparso, osservabilità parziale.
 11. Henderson, P. et al., "Deep RL that Matters", *AAAI*, 2018 — un solo run non basta: seed e dettagli implementativi cambiano gli esiti (cfr. sezioni 3.3, 7, 9).
 
-Scartati dopo controllo del codice: Even-Dar e Mansour 2001 (init ottimistica — mai usata: il resto parte da zero e le stime LLM hanno bias negativo, sezione 5; il flag `optimistic_init` esiste solo in `stash` FrozenLake, fuori perimetro); Even-Dar e Mansour 2003 (schedule `α = 1/N^ω` — mai usato: alpha sempre costante e gli args `alpha_mode` sono deprecated e ignorati, `doorkey_qtable_llminit.py:355-364`); Ng, Harada e Russell 1999 (gli shape `F = γΦ' − Φ` non sono mai aggiunti nei run valutati — `build_potential({})` vuoto nel ramo pretrained; la forma è già richiamata nella voce 3); Colas et al. 2018 e Agarwal et al. 2021 (nessuna power analysis né IQM nel codice: gli intervalli in `evaluate_llm.py` sono bootstrap semplici; restano lavoro futuro per la valutazione finale).
+Scartati dopo controllo del codice: Even-Dar e Mansour 2001 (init ottimistica — mai usata nel ramo DoorKey: il resto parte da zero e le stime LLM hanno bias negativo, sezione 5; `optimistic_init=True` è usato solo nel pilota FrozenLake 8x8, cfr. appendice §12, quindi resta fuori dal perimetro DoorKey valutato); Even-Dar e Mansour 2003 (schedule `α = 1/N^ω` — mai usato: alpha sempre costante e gli args `alpha_mode` sono deprecated e ignorati, `doorkey_qtable_llminit.py:355-364`); Ng, Harada e Russell 1999 (gli shape `F = γΦ' − Φ` non sono mai aggiunti nei run valutati — `build_potential({})` vuoto nel ramo pretrained; la forma è già richiamata nella voce 3); Colas et al. 2018 e Agarwal et al. 2021 (nessuna power analysis né IQM nel codice: gli intervalli in `evaluate_llm.py` sono bootstrap semplici; restano lavoro futuro per la valutazione finale).
+
+## 12. Appendice FrozenLake (architettura, senza numeri)
+
+Stessa idea del corpo (Q-init da stime LLM) su `FrozenLake-v1` slippery, ambiente stocastico più piccolo e senza stadi. Nessun numero sotto: `src/graph/data/` e `src/evaluate/output_frozenlake/` non sono versionati, quindi si descrive solo la pipeline.
+
+- MDP (`src/graph/frozenlake_mdp_graph.py`): `P[s][a]` da gymnasium con `success_rate=1/3` (voluta 1/3, perpendicolari 1/3+1/3), 64 stati su 8x8 / 16 su 4x4, stato = int `r*ncol+c`, 4 azioni (`left/down/right/up`), nessun muro. `V*` via value iteration stocastica `V*=max_a Σ p·[r+γV*]`, γ=0.99; `Q*(s,a)=Σ p·[r+γV*]` (0 su `done`). Cache `frozenlake_mdp_{map}_{slippery|deterministic}_seed{seed}.pkl/.json`.
+- Selezione stati (`src/graph/frozenlake_qlearning_states.py`): train Q-learning sul grafo con sampling da `P` + bucket per SR a finestra (`iniziale` 0-0.33, `intermedio` 0.33-0.8, `avanzato` 0.8-1.0, max 100 per bucket); bottleneck strutturale `extract_bottleneck` solo non-terminali: `goal_entry` (transizioni a reward>0), `on_policy` (rollout greedy-ottimo campionato 1 ogni 2), `near_policy` (1-ring slip degli on-policy, max 10 F). Profili in `_hparams_for`: 8x8 slippery con `optimistic_init=True`, `alpha=0.1`, `eps_decay=0.9985`, `eps_min=0.2`, `max_steps=400`. Se `avanzato` resta <10 stati, fallback ai top-V* (non più traiettoria pura: stesso caveat di §9).
+- Prompt (`src/docs/frozenlake/{it,en}/prompt.txt`, `legend.txt`, `transition-model.md`, `q/v-function_definition.md`): Q* come media pesata sugli esiti già calcolati (`<expected>` + 2×`<alternative>` per azione), `p` lette in `<documentation>`, mai scritte nelle mappe; `V*(H)=0`, `V*(F)∈(0,1)`, vietata la scorciatoia Manhattan; output solo array JSON con `code` + `q-function-values` per le 4 azioni.
+- Query (`src/llm/query_frozenlake_gpt.py`, `query_frozenlake_gemma.py`): 1 stato/request, `BUCKETS_WANTED=["bottleneck"]`, envelope `{seeds,bucket,rows}` una riga per (stato,azione) con `v_true=Q*` stocastico, dedup su file; comandi da `src/`: `python3 -m llm.query_frozenlake_gpt --map 8x8 --seed 1337 --bucket bottleneck --dry-run`.
+- Valutazione (`src/evaluate/evaluate_frozenlake_llm.py`, v3 come DoorKey): filtro per stato (fallito solo se tutte le azioni a `v_llm==0`), argmax tie-aware, regret primario, Δk su `γ^k`; 4 azioni quindi random=25%.
+- Agente (`src/agent/frozenlake_qtable_llminit.py`, `frozenlake_qtable_llminit2.py`, `frozenlake_state.py`, `src/env/frozenlake_factory.py`, `frozenlake_view_wrapper.py`): Q-learning tabellare standard, `encode=int`, init da media `v_llm` sulle coppie coperte (bottleneck prima per `max_init`), resto a zero; `--compare` con 3 run (LLM-init, Vanilla same-hp, Vanilla-std `alpha=0.1 gamma=0.99 eps_decay=0.9995 eps_min=0.01`) e metriche vs policy ottima VI (`agreement` + `value loss`).
+
+Dubbi noti: vedi §10-§11 e fallback top-V* sopra; `docs/README.md` cita ancora `prompt_json.txt`/`prompt_v.txt` non presenti in modo uniforme it/en.

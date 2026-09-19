@@ -9,20 +9,20 @@ MDP stocastico per FrozenLake slippery (is_slippery=True).
 - Salva pickle + json, cache per map_name/desc
 
 Uso:
-    python -m thesis.graph.frozenlake_mdp_graph --map 8x8 --seed 1337
-    python -m thesis.graph.frozenlake_mdp_graph --map 8x8 --seed 1337 --force
-    python -m thesis.graph.frozenlake_mdp_graph --map 8x8 --seed 42  # mappa random seedata (se desc custom)
+    python -m graph.frozenlake_mdp_graph --map 8x8 --seed 1337
+    python -m graph.frozenlake_mdp_graph --map 8x8 --seed 1337 --force
+    python -m graph.frozenlake_mdp_graph --map 8x8 --seed 42  # mappa random seedata (se desc custom)
 """
 from __future__ import annotations
 import argparse, json, pickle, sys
 from pathlib import Path
 _THIS = Path(__file__).resolve()
-_SRC = _THIS.parents[2]
+_SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 import gymnasium as gym
-from thesis.env.frozenlake_view_wrapper import FrozenLakeViewSystem
+from env.frozenlake_view_wrapper import FrozenLakeViewSystem
 
 GAMMA = 0.99
 ACTION_NAMES = {0: "left", 1: "down", 2: "right", 3: "up"}

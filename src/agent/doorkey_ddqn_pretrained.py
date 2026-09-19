@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """DDQN con pretraining supervisionato su Q_LLM (stile DQfD-lite).
 
-Input:  thesis/graph/data/llm_results_*.json  (righe (s, a, v_llm) = Q-function LLM)
+Input:  graph/data/llm_results_*.json  (righe (s, a, v_llm) = Q-function LLM)
 Fasi:   1) regressione MSE Q(s,a) -> v_llm per epoche fino a convergenza (no env)
         2) training online DDQN con expert permanenti nel replay (mai sovrascritti,
            campionati con priorita' piu' alta). Nessuna loss aggiuntiva.
-Output: thesis/graph/data/ddqn_pretrained_seed_X[_tag].json  (hist + meta)
+Output: graph/data/ddqn_pretrained_seed_X[_tag].json  (hist + meta)
 
 Riutilizza DDQNNet/train/evaluate/to_vec esistenti; seed = quello del JSON.
 """
@@ -183,7 +183,7 @@ def pretrain(agent, expert, lr, max_epochs, patience, min_delta, log_every):
 
 def main():
     ap = argparse.ArgumentParser(description="DDQN con pretraining supervisionato su Q_LLM")
-    ap.add_argument("--input", default=None, help="file JSON in thesis/graph/data/ (o path)")
+    ap.add_argument("--input", default=None, help="file JSON in graph/data/ (o path)")
     ap.add_argument("--episodes", type=int, default=3000)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--gamma", type=float, default=0.99)

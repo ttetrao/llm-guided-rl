@@ -2,8 +2,8 @@
 """
 Interroga Gemini AI Studio (gemma-4-26b-a4b-it) su FrozenLake slippery (MDP stocastico).
 
-Clone di thesis/llm/query_gemma.py (plumbing Gemini) con logica FrozenLake da
-thesis/llm/query_frozenlake_gpt.py, solo mode q:
+Clone di llm/query_gemma.py (plumbing Gemini) con logica FrozenLake da
+llm/query_frozenlake_gpt.py, solo mode q:
 - Sorgente stati: bucket da frozenlake_qstates_{map}_slippery_seed{seed}.pkl
   (default bottleneck: goal_entry + on-policy radi + 1-ring con quota H)
   + grafo frozenlake_mdp_{map}_slippery_seed{seed}.pkl per mappe s e outcome s'
@@ -16,8 +16,8 @@ thesis/llm/query_frozenlake_gpt.py, solo mode q:
 - id al LLM solo NNNN, bucket ricostruito al salvataggio (id=NNNN_bucket)
 
 Uso:
-    python -m thesis.llm.query_frozenlake_gemma --map 8x8 --seed 1337 --bucket bottleneck --dry-run
-    python -m thesis.llm.query_frozenlake_gemma --map 8x8 --seed 1337 --bucket bottleneck --limit 5
+    python -m llm.query_frozenlake_gemma --map 8x8 --seed 1337 --bucket bottleneck --dry-run
+    python -m llm.query_frozenlake_gemma --map 8x8 --seed 1337 --bucket bottleneck --limit 5
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 _THIS = Path(__file__).resolve()
-_SRC = _THIS.parents[2]
+_SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
@@ -46,8 +46,8 @@ except ImportError:
     GeminiLLM = None
     load_api_keys = lambda: None
 
-from thesis.graph.frozenlake_mdp_graph import load_or_build as load_mdp
-from thesis.graph.frozenlake_qlearning_states import get_qstates_paths, load_qstates
+from graph.frozenlake_mdp_graph import load_or_build as load_mdp
+from graph.frozenlake_qlearning_states import get_qstates_paths, load_qstates
 
 # ---------------------------------------------------------------------------
 # Config — plumbing come query_gemma.py (doorkey/Gemini)
@@ -449,7 +449,7 @@ def run(
         if not qstates_pkl.exists():
             print(
                 f"ERRORE: qstates non trovato {qstates_pkl}. "
-                f"Esegui prima thesis.graph.frozenlake_qlearning_states"
+                f"Esegui prima graph.frozenlake_qlearning_states"
             )
             return
         qdata = load_qstates(qstates_pkl)

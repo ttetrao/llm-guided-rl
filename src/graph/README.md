@@ -1,14 +1,14 @@
-# thesis/graph — MDP deterministico DoorKey
+# graph — MDP deterministico DoorKey
 
 Costruisce (o carica da cache) il grafo completo dell'MDP `MiniGrid-DoorKey-{size}x{size}-v0` con accesso indicizzato O(1) e mappa ASCII per nodo.
 
 * Ispirato a `bak/scripts/state_export2.py` per transizioni, stage e reward.
-* Mappa per nodo replica `thesis/env/view_wrapper.py:151` (legenda sotto).
+* Mappa per nodo replica `env/view_wrapper.py:151` (legenda sotto).
 
 ## Struttura
 
 ```
-thesis/graph/
+graph/
   mdp_graph.py   # build + render + save/load
   data/          # cache: mdp_{size}x{size}_seed{SEED}.pkl + .json
   __init__.py
@@ -19,16 +19,16 @@ Seed nel nome file (es. `mdp_8x8_seed42.pkl`).
 ## Uso CLI
 
 ```bash
-python -m thesis.graph.mdp_graph --seed 42 --size 8          # build o cache
-python -m thesis.graph.mdp_graph --seed 42 --size 8 --force  # rigenera
-python -m thesis.graph.mdp_graph --seed 0 --size 6 --show 1  # 6x6
-python -m thesis.graph.mdp_graph --seed 999 --size 16        # 16x16
+python -m graph.mdp_graph --seed 42 --size 8          # build o cache
+python -m graph.mdp_graph --seed 42 --size 8 --force  # rigenera
+python -m graph.mdp_graph --seed 0 --size 6 --show 1  # 6x6
+python -m graph.mdp_graph --seed 999 --size 16        # 16x16
 ```
 
 ## Uso Python
 
 ```python
-from thesis.graph import load_or_build, render_map
+from graph import load_or_build, render_map
 
 mdp = load_or_build(seed=42, size=8)  # carica se esiste, altrimenti crea
 # mdp = {seed, size, gamma, grid_info, nodes, index, adj, action_names}

@@ -1,1 +1,1 @@
-"""thesis.evaluate — valutazione LLM su grafo"""
+"""evaluate — valutazione LLM su grafo"""

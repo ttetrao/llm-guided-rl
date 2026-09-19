@@ -25,15 +25,15 @@ query_gemma.py lo legge cambiando solo BUCKETS_WANTED nelle nuove etichette
   ["bottleneck", "ckpt-0.3", "ckpt-0.5", "ckpt-0.7", "ckpt-0.8", "ckpt-1"]
 
 Uso:
-    python -m thesis.graph.doorkey_states --seed 1337 --total 100
-    python -m thesis.graph.doorkey_states --seed 1337 --total 0   # nessun tetto
-    python -m thesis.graph.doorkey_states --seeds 1337 42 99 --total 100  # N seed espliciti
-    python -m thesis.graph.doorkey_states --num-seeds 5 --total 100  # N seed random (rng: --seed)
-    python -m thesis.graph.doorkey_states --num-seeds 5 --seed 7 --total 100  # altro set riproducibile
-    python -m thesis.graph.doorkey_states --seed 42 --thresholds 0.3 0.5 0.8 --k-walk 5 --force
-    from thesis.graph.doorkey_states import load_or_extract
+    python -m graph.doorkey_states --seed 1337 --total 100
+    python -m graph.doorkey_states --seed 1337 --total 0   # nessun tetto
+    python -m graph.doorkey_states --seeds 1337 42 99 --total 100  # N seed espliciti
+    python -m graph.doorkey_states --num-seeds 5 --total 100  # N seed random (rng: --seed)
+    python -m graph.doorkey_states --num-seeds 5 --seed 7 --total 100  # altro set riproducibile
+    python -m graph.doorkey_states --seed 42 --thresholds 0.3 0.5 0.8 --k-walk 5 --force
+    from graph.doorkey_states import load_or_extract
     data = load_or_extract(seed=1337, total=100)
-    from thesis.graph.doorkey_states import load_or_extract_multi
+    from graph.doorkey_states import load_or_extract_multi
     multi = load_or_extract_multi(seeds=[1337, 42], total=100)
 """
 from __future__ import annotations
@@ -47,13 +47,13 @@ from collections import deque
 from pathlib import Path
 
 _THIS = Path(__file__).resolve()
-_SRC = _THIS.parents[2]
+_SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 import numpy as np
-from thesis.graph.mdp_graph import DIRS, load_or_build, get_paths as get_mdp_paths
-from thesis.graph.qlearning_states import QLearningAgent
+from graph.mdp_graph import DIRS, load_or_build, get_paths as get_mdp_paths
+from graph.qlearning_states import QLearningAgent
 
 DEFAULT_SEED = 1337
 DEFAULT_SIZE = 8
@@ -417,7 +417,7 @@ def main():
     p.add_argument("--max-episodes", type=int, default=10000, dest="max_episodes")
     p.add_argument("--window", type=int, default=100, help="finestra SR (default 100)")
     p.add_argument("--eval-every", type=int, default=50, dest="eval_every")
-    p.add_argument("--out", type=str, default=None, help="cartella output (default thesis/graph/data)")
+    p.add_argument("--out", type=str, default=None, help="cartella output (default graph/data)")
     p.add_argument("--force", action="store_true", help="rigenera anche se esiste")
     p.add_argument("--show", type=int, default=0, help="stampa N mappe campione")
     args = p.parse_args()

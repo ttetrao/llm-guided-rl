@@ -2,8 +2,8 @@
 """
 Interroga gpt-oss:120b via Ollama (cloud) su FrozenLake slippery (MDP stocastico).
 
-Clone di thesis/llm/query_gpt.py (plumbing Ollama) con logica FrozenLake da
-stash thesis/llm/query_frozenlake.py, solo mode q:
+Clone di llm/query_gpt.py (plumbing Ollama) con logica FrozenLake da
+stash llm/query_frozenlake.py, solo mode q:
 - Sorgente stati: bucket da frozenlake_qstates_{map}_slippery_seed{seed}.pkl
   (default bottleneck: goal_entry + on-policy radi + 1-ring con quota H)
   + grafo frozenlake_mdp_{map}_slippery_seed{seed}.pkl per mappe s e outcome s'
@@ -15,9 +15,9 @@ stash thesis/llm/query_frozenlake.py, solo mode q:
 - v_true = Q* stocastico = Σ p·[r+γV*] (0.0 su done)
 
 Uso:
-    python -m thesis.llm.query_frozenlake_gpt --map 8x8 --seed 1337 --bucket bottleneck --dry-run
-    OLLAMA_API_KEY=xxx python -m thesis.llm.query_frozenlake_gpt --map 8x8 --seed 1337 --bucket bottleneck
-    OLLAMA_HOST=http://localhost:11434 python -m thesis.llm.query_frozenlake_gpt --model gpt-oss:20b --bucket bottleneck --limit 5
+    python -m llm.query_frozenlake_gpt --map 8x8 --seed 1337 --bucket bottleneck --dry-run
+    OLLAMA_API_KEY=xxx python -m llm.query_frozenlake_gpt --map 8x8 --seed 1337 --bucket bottleneck
+    OLLAMA_HOST=http://localhost:11434 python -m llm.query_frozenlake_gpt --model gpt-oss:20b --bucket bottleneck --limit 5
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 _THIS = Path(__file__).resolve()
-_SRC = _THIS.parents[2]
+_SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
@@ -46,8 +46,8 @@ try:
 except ImportError:
     Client = None  # type: ignore
 
-from thesis.graph.frozenlake_mdp_graph import load_or_build as load_mdp
-from thesis.graph.frozenlake_qlearning_states import get_qstates_paths, load_qstates
+from graph.frozenlake_mdp_graph import load_or_build as load_mdp
+from graph.frozenlake_qlearning_states import get_qstates_paths, load_qstates
 
 # ---------------------------------------------------------------------------
 # Config — plumbing come query_gpt.py (doorkey/Ollama)
@@ -499,7 +499,7 @@ def run(
         if not qstates_pkl.exists():
             print(
                 f"ERRORE: qstates non trovato {qstates_pkl}. "
-                f"Esegui prima thesis.graph.frozenlake_qlearning_states"
+                f"Esegui prima graph.frozenlake_qlearning_states"
             )
             return
         qdata = load_qstates(qstates_pkl)

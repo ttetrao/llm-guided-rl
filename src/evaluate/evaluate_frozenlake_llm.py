@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Valuta la bontà dei valori LLM generati via thesis/llm/query_frozenlake_gpt.py,
+Valuta la bontà dei valori LLM generati via llm/query_frozenlake_gpt.py,
 CORRISPETTIVO di evaluate_llm.py per FrozenLake slippery.
 
 Formato JSON atteso (una riga per azione, 4 azioni per stato in mode q):
@@ -29,9 +29,9 @@ v2 (design):
   7. Bootstrap per stato/seed.
 
 Uso:
-    python -m thesis.evaluate.evaluate_frozenlake_llm --path thesis/graph/data/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b.json --outdir thesis/evaluate/output_frozenlake
-    python -m thesis.evaluate.evaluate_frozenlake_llm --path thesis/graph/data --gamma auto
-    python -m thesis.evaluate.evaluate_frozenlake_llm --path ... --tie-eps 1e-6
+    python -m evaluate.evaluate_frozenlake_llm --path graph/data/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b.json --outdir evaluate/output_frozenlake
+    python -m evaluate.evaluate_frozenlake_llm --path graph/data --gamma auto
+    python -m evaluate.evaluate_frozenlake_llm --path ... --tie-eps 1e-6
 """
 from __future__ import annotations
 
@@ -865,7 +865,7 @@ def main():
         description="Valuta LLM su FrozenLake slippery (corrispettivo di evaluate_llm.py) — v3: tie-aware, filtro per stato, Δk")
     parser.add_argument("--path", type=str, required=True,
                         help="file JSON/CSV o cartella con frozenlake_llm results")
-    parser.add_argument("--outdir", type=str, default="thesis/evaluate/output_frozenlake", help="output dir")
+    parser.add_argument("--outdir", type=str, default="evaluate/output_frozenlake", help="output dir")
     parser.add_argument("--gamma", type=str, default=str(DEFAULT_GAMMA),
                         help="fattore di sconto (v = gamma^k); 'auto' per stima dai dati (default 0.99)")
     parser.add_argument("--tie-eps", type=float, default=TIE_EPS_DEFAULT,

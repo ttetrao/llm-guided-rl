@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Valuta la bontà dei valori LLM generati via thesis/llm/query_gemma.py.
+Valuta la bontà dei valori LLM generati via llm/query_gemma.py.
 
 Formato JSON atteso (una riga per azione, 6 azioni per stato):
   id, seed, size, bucket, node_id, x, y, dir, has_key, door_open, stage,
@@ -29,9 +29,9 @@ v2 (design):
   7. Bootstrap per stato/seed.
 
 Uso:
-    python -m thesis.evaluate.evaluate_llm --path thesis/graph/data/llm_results_8x8_seed1337_gemma-4-26b-a4b-it.json --outdir thesis/evaluate/output
-    python -m thesis.evaluate.evaluate_llm --path thesis/graph/data --gamma auto
-    python -m thesis.evaluate.evaluate_llm --path ... --tie-eps 1e-6
+    python -m evaluate.evaluate_llm --path graph/data/llm_results_8x8_seed1337_gemma-4-26b-a4b-it.json --outdir evaluate/output
+    python -m evaluate.evaluate_llm --path graph/data --gamma auto
+    python -m evaluate.evaluate_llm --path ... --tie-eps 1e-6
 """
 from __future__ import annotations
 
@@ -864,7 +864,7 @@ def main():
         description="Valuta LLM su grafo (v_true vs v_llm) — v3: tie-aware, filtro per stato, Δk")
     parser.add_argument("--path", type=str, required=True,
                         help="file JSON/CSV o cartella con llm_results")
-    parser.add_argument("--outdir", type=str, default="thesis/evaluate/output", help="output dir")
+    parser.add_argument("--outdir", type=str, default="evaluate/output", help="output dir")
     parser.add_argument("--gamma", type=str, default=str(DEFAULT_GAMMA),
                         help="fattore di sconto (v = gamma^k); 'auto' per stima dai dati (default 0.99)")
     parser.add_argument("--tie-eps", type=float, default=TIE_EPS_DEFAULT,

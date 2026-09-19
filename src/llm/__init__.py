@@ -1,1 +1,1 @@
-"""thesis.llm — query Gemini AI Studio."""
+"""llm — query Gemini AI Studio."""

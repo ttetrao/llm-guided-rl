@@ -12,9 +12,9 @@ Q-learning tabulare su seed singolo (default 1337) per DoorKey 8x8.
 - Valutazione greedy ogni 50 episodi (log, non per bucketing)
 
 Uso:
-    python -m thesis.graph.qlearning_states --seed 1337 --size 8
-    python -m thesis.graph.qlearning_states --seed 1337 --size 8 --force
-    from thesis.graph.qlearning_states import load_or_train
+    python -m graph.qlearning_states --seed 1337 --size 8
+    python -m graph.qlearning_states --seed 1337 --size 8 --force
+    from graph.qlearning_states import load_or_train
     data = load_or_train(seed=1337, size=8)
 """
 from __future__ import annotations
@@ -28,12 +28,12 @@ from collections import defaultdict, deque
 from pathlib import Path
 
 _THIS = Path(__file__).resolve()
-_SRC = _THIS.parents[2]
+_SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 import numpy as np
-from thesis.graph.mdp_graph import ACTIONS_ALL, load_or_build, get_paths as get_mdp_paths
+from graph.mdp_graph import ACTIONS_ALL, load_or_build, get_paths as get_mdp_paths
 
 # ---------------------------------------------------------------------------
 # Costanti / bucket per fase di apprendimento (nomi adatti a contesto universitario)
@@ -421,7 +421,7 @@ def main():
         for k in BUCKETS:
             assert set(data["buckets"][k]).issubset(set(data.get("critical_ids", {}).get(k, []))), f"significant_only ma bucket {k} ha non-critici"
     # verifica che node_id esistano nel grafo
-    from thesis.graph.mdp_graph import load_mdp
+    from graph.mdp_graph import load_mdp
     mdp_pkl, _ = get_mdp_paths(args.seed, args.size)
     if mdp_pkl.exists():
         mdp = load_mdp(mdp_pkl)

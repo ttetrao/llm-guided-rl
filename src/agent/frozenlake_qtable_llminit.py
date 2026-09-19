@@ -3,7 +3,7 @@
 
 Clone of doorkey_qtable_llminit.py for FrozenLake slippery:
 - states are plain ints (fixed map, no relative coords / stages / mdp lookups)
-- 4 actions (left/down/right/up), env via thesis.env.frozenlake_factory
+- 4 actions (left/down/right/up), env via env.frozenlake_factory
 - no torch/minigrid imports (DATA_DIR/ACTION_IDX/resolve_input defined locally)
 
 The LLM values only seed the table on covered pairs, the rest starts at 0.
@@ -15,7 +15,7 @@ plot insieme a tutti gli iperparametri (box in basso).
 --compare: 3 run (LLM-init, Vanilla stessi hp, Vanilla-std) + due PNG
 _vs_std/_vs_samehp a 2 curve.
 
-Output: thesis/graph/data/frozenlake_qtable_llminit_{map}_slippery_seed_X[_tag].json + .png plots.
+Output: graph/data/frozenlake_qtable_llminit_{map}_slippery_seed_X[_tag].json + .png plots.
 """
 import argparse
 import json
@@ -34,7 +34,7 @@ from env.frozenlake_factory import make_env  # noqa: E402
 from frozenlake_state import encode  # noqa: E402
 
 try:  # policy ottima da VI (solo metriche; fallisce solo fuori dal package)
-    from thesis.graph.frozenlake_mdp_graph import load_or_build as load_opt_mdp
+    from graph.frozenlake_mdp_graph import load_or_build as load_opt_mdp
 except ImportError:
     load_opt_mdp = None  # type: ignore
 
@@ -560,7 +560,7 @@ def main():
     ap = argparse.ArgumentParser(
         description="Q-Learning tabulare standard con init Q=V_LLM (FrozenLake)")
     ap.add_argument("--input", default=None,
-                    help="file JSON in thesis/graph/data/ (o path)")
+                    help="file JSON in graph/data/ (o path)")
     ap.add_argument("--map", type=str, default=DEFAULT_MAP, choices=["4x4", "8x8"])
     ap.add_argument("--episodes", type=int, default=3000)
     ap.add_argument("--alpha", type=float, default=0.15)
@@ -685,7 +685,7 @@ def main():
     n_actions = int(env.action_space.n)
     assert n_actions == len(ACTION_IDX), f"env ha {n_actions} azioni"
     if load_opt_mdp is None:
-        print("WARN: thesis.graph non importabile, metriche policy ottima saltate")
+        print("WARN: graph non importabile, metriche policy ottima saltate")
         opt_mdp = None
     else:
         opt_mdp = load_opt_mdp(seed=seed, map_name=map_name, is_slippery=True,

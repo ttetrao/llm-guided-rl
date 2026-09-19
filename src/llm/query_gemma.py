@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Interroga Gemini AI Studio (gemma-4-26b-a4b-it) usando i file generati in thesis/graph
-e il prompt in thesis/docs/doorkey/{it,en}/prompt.txt con placeholder sostituiti.
+Interroga Gemini AI Studio (gemma-4-26b-a4b-it) usando i file generati in graph
+e il prompt in docs/doorkey/{it,en}/prompt.txt con placeholder sostituiti.
 
 - Sorgente stati: solo bucket 'iniziale' e 'avanzato' (0-0.33 e 0.8-1.0) da
   qlearning_states_8x8_seed1337.pkl (max 100 per bucket, campionati random)
@@ -13,9 +13,9 @@ e il prompt in thesis/docs/doorkey/{it,en}/prompt.txt con placeholder sostituiti
 - Controllo dedup: non riprocessa node/action già salvati su JSON
 
 Uso:
-    python -m thesis.llm.query_gemma --seed 1337 --size 8 --limit 10 --dry-run
-    python -m thesis.llm.query_gemma --seed 1337 --limit 20
-    python -m thesis.llm.query_gemma --seed 1337 --limit-per-bucket 5
+    python -m llm.query_gemma --seed 1337 --size 8 --limit 10 --dry-run
+    python -m llm.query_gemma --seed 1337 --limit 20
+    python -m llm.query_gemma --seed 1337 --limit-per-bucket 5
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 
 _THIS = Path(__file__).resolve()
-_SRC = _THIS.parents[2]
+_SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
@@ -45,8 +45,8 @@ except ImportError:
     GeminiLLM = None
     load_api_keys = lambda: None
 
-from thesis.graph.mdp_graph import load_or_build, get_paths as get_mdp_paths
-from thesis.graph.qlearning_states import get_qstates_paths, load_qstates
+from graph.mdp_graph import load_or_build, get_paths as get_mdp_paths
+from graph.qlearning_states import get_qstates_paths, load_qstates
 
 # ---------------------------------------------------------------------------
 # Config come gconnection.py — 1 stato per request per limiti dimensione
@@ -342,7 +342,7 @@ def run(seed: int | None = DEFAULT_SEED, size: int | None = DEFAULT_SIZE, lang: 
         mdps[seed] = mdp
         qstates_pkl, _ = get_qstates_paths(seed, size)
         if not qstates_pkl.exists():
-            print(f"ERRORE: qstates non trovato {qstates_pkl}. Esegui prima thesis.graph.qlearning_states")
+            print(f"ERRORE: qstates non trovato {qstates_pkl}. Esegui prima graph.qlearning_states")
             return
         qdata = load_qstates(qstates_pkl)
         seeds, seed_buckets = _states_seed_buckets(qdata, seed)

@@ -1,4 +1,4 @@
-"""thesis.graph — MDP deterministico DoorKey con cache indicizzata."""
+"""graph — MDP deterministico DoorKey con cache indicizzata."""
 import importlib as _il
 
 __all__ = ["build_mdp", "load_or_build", "get_paths", "render_map", "load_or_train_qstates", "get_qstates_paths",
