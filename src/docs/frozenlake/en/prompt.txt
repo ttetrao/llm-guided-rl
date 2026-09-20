@@ -10,35 +10,39 @@ in the intended direction of the action; each <alternative> is the map of a stat
 read them in <documentation> (is_slippery/success_rate) and use them as weights.
 For each a generate Q from the V* values as a weighted average over the outcomes:
 Q*(s,a) = Σ p(s',r|s,a)·[r + γ·V*(s')], with r=1 if s' is the goal otherwise r=0, γ=0.99.
-Estimate V*(s') from each outcome map: V*=0 if s' is a hole (H, terminal), V*∈(0,1) if s' is frozen (F).
-FORBIDDEN to estimate V* from Manhattan distance to the goal: that shortcut ignores slippage and holes.
-For each F outcome assess the geometry on the map, in words: is any H on the route to the goal or only lateral?
-How many walkable escape cells surround it? Are there further holes a few steps along the path?
-A lateral H with open escapes penalizes little, a trapped cell or one with H on-route penalizes heavily.
-The goal (G) is terminal with r=1.
-
+Estimate V*(s') from each outcome map: V*=0 if s' is a hole (H, terminal), V*∈(0,1) if s' is frozen (F), V*(G)=0 (the goal is terminal: its contribution is p·1 via r, with no γ on r).
+Do not infer transitions: use only the maps in <expected>/<alternative> and the p read in <documentation>. The goal (G) is terminal with r=1.
 
 Estimation rules:
 - understand the rules in the documentation (in particular the slippery stochastic MDP and reward r∈{0,1} with r=1 only on the goal)
 - read the definitions and distinguish v_π/q_π (generic policy) from v_*/q_* (optimal policy, max over π)
 - consider a gamma of 0.99 and apply the optimality equation as a weighted average, not the v_π Bellman equation and not the deterministic form
 - understand what the state describes (row r, column c, cell type ch) and that each <a> already contains all possible s' split into <expected> and <alternative>
-- always distinguish H (hole, terminal, V*=0) from F (frozen, V*∈(0,1)): never answer 0 for F if a path to the goal exists
+- always distinguish H (hole, terminal, V*=0) from F (frozen, V*∈(0,1)): avoid 0 for F when a walkable route to the goal is visible on the map; use 0 only if the cell is trapped with no walkable route to the goal
 - hole penalty for V*(F): count where the holes sit relative to the route to the goal (on-route or lateral) and how many escape ways the cell has; never treat all H-adjacent F cells alike
 - values must be normalized (float) in [0,1] (r=1.0 on goal already)
 - IMPORTANT: if you have doubts about how the environment works or how to interact with it and what actions can be performed, re-read the documentation carefully.
-
+- FORBIDDEN to estimate V* from Manhattan distance to the goal: that shortcut ignores slippage and holes.
+For each F outcome assess the geometry on the map, in words: is any H on the route to the goal or only lateral?
+How many walkable escape cells surround it? Are there further holes a few steps along the path?
+A lateral H with open escapes penalizes little, a trapped cell or one with H on-route penalizes heavily.
+- Don't come up with number that you can't explain.
 
 Analysis rules (inside the JSON, no other text outside the JSON):
-- inside analysis cover all 4 points below, no length limits: every sentence must serve one of the 4 points, nothing else. Identical analyses across different actions invalidate the response: each analysis must contain at least one detail specific to its outcomes.
-- in analysis you must explicitly cite: 1) which definition (v_* or q_*) and which optimality equation, 2) which fact from <documentation>/<legend> (slippery, outcome probabilities, r=1 only if s' is goal, terminal H) you used, 3) how the transition model contribute to the final value, and 4) the explicit computation with the numbers of these outcomes (V*(s') of expected and of each alternative, then Q* as a weighted average with the p read in <documentation>).
-- for each outcome state its geometric assessment in words (hole or not; if frozen: H on-route or lateral, many or few escape ways) and explain how the assigned V* follows from it, without numeric tables.
+- inside analysis cover all 4 points below, no length limits: every sentence must serve one of the 4 points, nothing else. Each analysis must contain at least one detail specific to its outcomes (no copy-paste across actions).
+- in analysis you must explicitly cite: 1) which definition (v_* or q_*) and which optimality equation, 2) which fact from <documentation>/<legend> (slippery, outcome probabilities, r=1 only if s' is goal, terminal H) you used, 3) how the transition model contributes to the final value (which outcomes are expected vs slippage and with which p), and 4) the explicit computation with the numbers of these outcomes (V*(s') of expected and of each alternative, then Q* as a weighted average with the p read in <documentation>).
+- for each outcome state its geometric assessment in words (hole or not; if frozen: H on-route or lateral, many or few escape ways) and explain how the assigned V* follows from it; give the numbers inline (V* per outcome, then Q*), no markdown tables.
 - If you have to estimate V values you have to use the formulas.
+- do not overestimate states whose route to the goal is blocked or unseen on the map.
+
+
+in "preliminary-analysis" compare the maps of <left>, <down>, <right>, <up> and state which action is optimal; it must coincide with the action holding the highest Q* value. Explain why it is the best and why the others are worse.
 
 VERY IMPORTANT:
 Mandatory output (solely and exclusively an array of valid JSON objects, with no text before or after, no markdown, no "..."):
 [{
  "code": string,
+  "preliminary-analysis": string,
   "q-function-values": {
     "left": {
          "analysis": string,

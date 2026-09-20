@@ -3,51 +3,54 @@ e a cosa serve ogni azione.
 Dopo aver letto la definizione di q-function in <q-definition> e di v-function in <v-definition> il tuo compito è guardare
 lo stato corrente in <current_state id="xxxx"> (xxxx è il codice da riportare in "code") e i 6 stati successivi già calcolati
 esplicitamente in <left>, <right>, <forward>, <pickup>, <drop>, <toggle> dove ciascuno contiene la mappa di s' = T(s,a)
-per quell'azione (done è ignorata perché sempre self-loop). Per ogni a genera Q dai valori V*:
-Q(s,a) = r + γ·V*(s') dove s' è lo stato in <a>, r=1 se s' è il goal altrimenti r=0, γ=0.99.
-In pratica leggi r dalla regola del goal e V*(s') dallo stato in <a>, non inferire le transizioni. Nota: drop è self-loop (V*(s')=V*(s)) e non è mai ottima salvo tie.
+per quell'azione (done è ignorata perché sempre self-loop). Per ogni a genera Q* dai valori V*:
+Q*(s,a) = r + γ·V*(s') dove s' è lo stato in <a>, r=1 se s' è il goal altrimenti r=0, γ=0.99.
+Stima V*(s') dalla mappa in <a>: V*(s')=γ^d con d=azioni da s' (non da s) al goal. Se s' è il goal (G, terminale): r=1, V*=0, Q*=1.0. γ moltiplica solo V*(s'), mai r.
+In pratica leggi r dalla regola del goal e V*(s') dallo stato in <a>, non inferire le transizioni. Valuta drop come ogni altra azione dalla sua mappa s'; spesso è self-loop ma non assumerne a priori il rango.
 
 Regole per la stima:
 - comprendi le regole della documentazione (in particolare MDP deterministico e reward normalizzato r∈{0,1})
 - leggi le definizioni e distingui v_π/q_π (policy generica) da v_*/q_* (policy ottima, max su π)
 - considera un gamma di 0.99 e applica l’equazione di ottimalità, non la Bellman di v_π
-- nel conto di d conta ogni azione eseguita come 1 passo di sconto, anche se non sposta l'agente: d è il numero di azioni al goal, non di celle percorse; ricava dalla <documentation> l'effetto di ciascuna azione.
+- nel conto di d conta ogni azione eseguita come 1 passo di sconto, anche se non sposta l'agente: d è il numero di azioni da s' (non da s) al goal, non di celle percorse; il passo s→s' è già scontato una volta dal γ esterno; ricava dalla <documentation> l'effetto di ciascuna azione.
 - comprendi cosa descrive lo stato (x,y,dir,has_key,door_open) e che ogni <a> contiene già s'=T(s,a)
 - Fuori dal JSON niente altro testo; dentro analysis cita tutti e 3 i punti della riga sotto, senza limiti di lunghezza: ogni frase deve servire a uno dei 3 punti, niente altro. Analisi identiche tra azioni diverse rendono la risposta invalida: ogni analysis deve contenere almeno un dettaglio specifico del suo s'.
-- in analysis devi citare esplicitamente: 1) quale definizione (v_* o q_*) e quale equazione di ottimalità, 2) quale fatto di <documentation>/<legend> (deterministico, r=1 solo se s' è goal) hai usato per adattare E[·] al caso DoorKey, e 3) il conto esplicito con i numeri di questo s' (stima di V*(s') come γ^d con d=passi al goal, poi Q=r+0.99·V*(s'))
-- i valori devono essere normalizzati (float) in [0,1] (già r=1.0 su goal)
+- in analysis devi citare esplicitamente: 1) quale definizione (v_* o q_*) e quale equazione di ottimalità, 2) quale fatto di <documentation>/<legend> (deterministico, r=1 solo se s' è goal) hai usato per adattare E[·] al caso DoorKey, e 3) il conto esplicito con i numeri di questo s' (stima di V*(s') come γ^d con d=azioni da s' al goal, poi Q*=r+0.99·V*(s'); se s' è goal usa r=1, V*=0, Q*=1.0)
+- i valori devono essere numeri JSON (float, non stringhe) in [0,1], es. 0.73 (già r=1.0 su goal)
+- Non usare mai 0.0 come ripiego per l'incertezza.
+- Non inventare numeri che non sai spiegare.
 - IMPORTANTE: se hai dubbi sul funzionamento dell'ambiente o su come si interagisce con l'ambiente e sul tipo di azioni effettuabili rileggi con attenzione la documentazione.
-- in "preliminary analysis" guarda il risultato delle azioni in <left>, <right>, <forward>, <pickup>, <drop>, <toggle> e brevemente scrivi quale azione è quella che rappresenta la policy ottima (deve coincidere con l'azione di valore massimo tra le 6).
+- in "preliminary-analysis" confronta le mappe in <left>, <right>, <forward>, <pickup>, <drop>, <toggle> e indica quale azione è ottima; deve coincidere con l'azione con il valore Q* massimo. Spiega perché è la migliore e perché le altre sono peggiori.
 
 IMPORTANTISSIMO:
 Output obbligatorio (solo e unicamente un array di oggetti JSON validi, senza testo prima o dopo, senza markdown, senza "..."):
 [{
  "code": string,
- "preliminary analysis": string,
+  "preliminary-analysis": string,
   "q-function-values": {
     "left": {
          "analysis": string,
-         "value": decimal
+          "value": float
     },
     "right": {
          "analysis": string,
-         "value": decimal
+          "value": float
     },
     "forward": {
          "analysis": string,
-         "value": decimal
+          "value": float
     },
     "pickup": {
          "analysis": string,
-         "value": decimal
+          "value": float
     },
     "drop": {
          "analysis": string,
-         "value": decimal
+          "value": float
     },
     "toggle": {
          "analysis": string,
-         "value": decimal
+          "value": float
     }
   }
 }, ...]

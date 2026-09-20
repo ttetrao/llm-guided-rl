@@ -67,7 +67,7 @@ def render_map(s: int, nrow: int, ncol: int, desc) -> str:
                 if ch == "S":
                     ch = " S "
                 elif ch == "F":
-                    ch = "   "
+                    ch = " F "
                 elif ch == "H":
                     ch = " H "
                 elif ch == "G":

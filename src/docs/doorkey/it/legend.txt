@@ -40,3 +40,9 @@ FIND_KEY = "find_key"
 OPEN_DOOR = "open_door"
 REACH_GOAL = "reach_goal"
 
+Regole di calcolo (senza eccezioni):
+- ogni V*(s') è stimato solo dalla sua mappa (no punto fisso, no incognite ausiliarie);
+- γ moltiplica solo V*(s'), mai r: ogni termine è r + γ·V*(s');
+- se s' è G: r=1, V*=0, Q*=1.0;
+- V*=0 / Q*=0 è vietato come default per route incerte o lontane; usa 0 solo con prova esplicita da mappa di s' più <documentation>/<legend> che r non potrà mai diventare 1.
+

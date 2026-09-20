@@ -11,7 +11,7 @@
 +----+----+----+----+----+----+
 |    |    |    | ▇  |    | G  |
 +----+----+----+----+----+----+
-...
+
 Legend:
 
 A(U) = Agent (up)
@@ -39,4 +39,10 @@ Stage:
 FIND_KEY = "find_key"
 OPEN_DOOR = "open_door"
 REACH_GOAL = "reach_goal"
+
+Computation rules (no exceptions):
+- each V*(s') is estimated only from its map (no fixed-point, no auxiliary unknowns);
+- γ multiplies only V*(s'), never r: each term is r + γ·V*(s');
+- if s' is G: r=1, V*=0, Q*=1.0;
+- V*=0 / Q*=0 is forbidden as a default for uncertain or distant routes; use 0 only with explicit proof from the s' map plus <documentation>/<legend> that r can never become 1.
 

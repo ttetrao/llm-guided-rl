@@ -1,19 +1,19 @@
 +----+----+----+----+----+----+----+----+
-| S  | A  |    |    |    |    |    |    |
+| S  | A  | F  | F  | F  | F  | F  | F  |
 +----+----+----+----+----+----+----+----+
-|    |    |    |    |    |    |    |    |
+| F  | F  | F  | F  | F  | F  | F  | F  |
 +----+----+----+----+----+----+----+----+
-|    |    |    | H  |    |    |    |    |
+| F  | F  | F  | H  | F  | F  | F  | F  |
 +----+----+----+----+----+----+----+----+
-|    |    |    |    |    | H  |    |    |
+| F  | F  | F  | F  | F  | H  | F  | F  |
 +----+----+----+----+----+----+----+----+
-|    |    |    | H  |    |    |    |    |
+| F  | F  | F  | H  | F  | F  | F  | F  |
 +----+----+----+----+----+----+----+----+
-|    | H  | H  |    |    |    | H  |    |
+| F  | H  | H  | F  | F  | F  | H  | F  |
 +----+----+----+----+----+----+----+----+
-|    | H  |    |    | H  |    | H  |    |
+| F  | H  | F  | F  | H  | F  | H  | F  |
 +----+----+----+----+----+----+----+----+
-|    |    |    | H  |    |    |    | G  |
+| F  | F  | F  | H  | F  | F  | F  | G  |
 +----+----+----+----+----+----+----+----+
 Legend:
 
@@ -25,7 +25,7 @@ A = Agent (agent position in that map)
 
 Computation rules (no exceptions):
 - each V*(s') is estimated only from its map (no fixed-point, no auxiliary unknowns);
-- γ multiplies EVERY term of the average;
+- γ multiplies only V*(s'), never r: each term is p·[r + γ·V*(s')];
 - H is always 0 (terminal hole: episode over, r=0);
 - if an outcome were G: r=1, V*=0, contribution (p·1).
 

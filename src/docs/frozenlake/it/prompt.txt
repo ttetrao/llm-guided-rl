@@ -27,7 +27,7 @@ Regole per la stima:
 - penalità hole per V*(F): conta dove sono le H rispetto alla rotta verso il goal (sulla rotta o laterali) e quante vie di fuga ha la cella; non trattare tutte le F adiacenti a una H allo stesso modo
 - i valori devono essere normalizzati (float) in [0,1] (già r=1.0 su goal)
 - IMPORTANTE: se hai dubbi sul funzionamento dell'ambiente o su come si interagisce con l'ambiente e sul tipo di azioni effettuabili rileggi con attenzione la documentazione.
-- in "preliminary analysis" guarda gli esiti in <left>, <down>, <right>, <up> e brevemente scrivi quale azione è quella che rappresenta la policy ottima (deve coincidere con l'azione di valore massimo tra le 4).
+- in "preliminary-analysis" guarda gli esiti in <left>, <down>, <right>, <up> e brevemente scrivi quale azione è quella che rappresenta la policy ottima (deve coincidere con l'azione di valore massimo tra le 4).
 
 Regole per analysis (dentro il JSON, niente altro testo fuori dal JSON):
 - dentro analysis cita tutti e 4 i punti della riga sotto, senza limiti di lunghezza: ogni frase deve servire a uno dei 4 punti, niente altro. Analisi identiche tra azioni diverse rendono la risposta invalida: ogni analysis deve contenere almeno un dettaglio specifico dei suoi esiti.
@@ -38,7 +38,7 @@ IMPORTANTISSIMO:
 Output obbligatorio (solo e unicamente un array di oggetti JSON validi, senza testo prima o dopo, senza markdown, senza "..."):
 [{
  "code": string,
- "preliminary analysis": string,
+  "preliminary-analysis": string,
   "q-function-values": {
     "left": {
          "analysis": string,

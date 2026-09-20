@@ -4,13 +4,13 @@ from typing import Any
 
 LEGEND = """
 +----+----+----+----+
-| S  |    |    |    |
+| S  | F  | F  | F  |
 +----+----+----+----+
-|    |    |    |    |
+| F  | F  | F  | F  |
 +----+----+----+----+
-|    | H  |    |    |
+| F  | H  | F  | F  |
 +----+----+----+----+
-|    |    |    | G  |
+| F  | F  | F  | G  |
 +----+----+----+----+
 
 Legend:
@@ -75,7 +75,7 @@ class FrozenLakeViewSystem(gym.Wrapper):
                     if ch == "S":
                         ch = " S "
                     elif ch == "F":
-                        ch = "   "
+                        ch = " F "
                     elif ch == "H":
                         ch = " H "
                     elif ch == "G":
@@ -113,7 +113,7 @@ class FrozenLakeViewSystem(gym.Wrapper):
                     if ch == "S":
                         ch = " S "
                     elif ch == "F":
-                        ch = "   "
+                        ch = " F "
                     elif ch == "H":
                         ch = " H "
                     elif ch == "G":

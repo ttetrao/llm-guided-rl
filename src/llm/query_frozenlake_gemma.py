@@ -261,7 +261,7 @@ def call_with_retry(client, prompt, retries=RETRY_LIMIT, delay=RETRY_DELAY):
         try:
             resp = client.ask(prompt=prompt)
             if resp and resp.strip():
-                print(resp)
+                print(f"  risposta grezza preview: {resp[:400].replace(chr(10), ' ')}...")
                 return resp
             print(f"  risposta vuota (tentativo {attempt+1}/{retries})")
         except Exception as e:
