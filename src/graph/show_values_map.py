@@ -4,7 +4,7 @@ Mappa ASCII con V-true / V-llm + tipo casella, per DoorKey e FrozenLake.
 
 - DoorKey: per cella (x,y) mostra Vtrue/Vllm = max su tutti gli stati
   (dir, has_key, door_open) nella cella; Vllm(s) = max_a Q_llm(s,a) dalle righe LLM.
-  (ponytail: una mappa col max invece di 16 mappe per slice; slice completa se serve davvero)
+  ( una mappa col max invece di 16 mappe per slice; slice completa se serve davvero)
 - FrozenLake: 1 stato = 1 cella, nessun max necessario.
 - I grafi MDP vengono riusati dalla cache o rigenerati se assenti (--force per forzare).
 
@@ -113,7 +113,7 @@ def show_doorkey(seed: int, size: int, llm: str | None, force: bool):
                 tot += 1
                 if vl is not None:
                     cov += 1
-                    # MAE su V: |max_a Q_llm - V*| per gli stati coperti (ponytail: media, non bootstrap)
+                    # MAE su V: |max_a Q_llm - V*| per gli stati coperti ( media, non bootstrap)
                     for n in st:
                         if n["id"] in vllm:
                             err += abs(vllm[n["id"]] - float(n["v_value"]))

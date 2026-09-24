@@ -42,7 +42,7 @@ from paths import AGENTS_DIR, CACHE_DIR, LLM_DIR  # noqa: E402
 ACTION_IDX = {"left": 0, "down": 1, "right": 2, "up": 3}
 DEFAULT_MAP = "8x8"
 TIE_EPS = 1e-6  # pareggio per l'agreement tie-aware con la policy ottima
-# ponytail: standard per 8x8 slippery (alpha basso, esplorazione lunga)
+# standard per 8x8 slippery (alpha basso, esplorazione lunga)
 STD = {"alpha": 0.1, "gamma": 0.99, "eps_decay": 0.9995, "eps_min": 0.01}
 PAIRS = (("LLM-init", "Vanilla-std", "_vs_std"),
          ("LLM-init", "Vanilla (same hp)", "_vs_samehp"))
@@ -475,7 +475,7 @@ def save_run(agent, hist, ev, args, name, label, file_seed, seed, einfo,
              input_path, map_name, train_seeds=None, eval_new=None,
              eval_in_seed=None, eval_new_seed=None, opt=None):
     out = AGENTS_DIR / f"{name}.json"
-    # ponytail: seeds in cima; modo singolo identico a prima + chiave "seeds"
+    # seeds in cima; modo singolo identico a prima + chiave "seeds"
     hp = {"episodes": args.episodes, "alpha": args.alpha,
           "gamma": args.gamma, "eps_decay": args.eps_decay,
           "eps_min": args.eps_min, "max_steps": args.max_steps,

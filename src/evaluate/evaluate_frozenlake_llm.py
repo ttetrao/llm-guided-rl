@@ -106,7 +106,7 @@ _SHORT_TAGS = {
 
 
 def short_tag(stem, extra=""):
-    """Stem lungo del file -> etichetta breve per i titoli (ponytail: mappa fissa + fallback)."""
+    """Stem lungo del file -> etichetta breve per i titoli ( mappa fissa + fallback)."""
     if stem in _SHORT_TAGS:
         return _SHORT_TAGS[stem]
     parts = stem.split("_")
@@ -800,7 +800,7 @@ def plot_confusion(act, title, path, square=True):
     cm_r = cm.reindex(index=rows, columns=cols).fillna(0.0)
 
     # --- FIX CRASH: tutto in numpy; masked_where non broadcasta (6,1)->(6,6),
-    #     quindi la maschera la costruisco con np.broadcast_to ---
+    #   quindi la maschera la costruisco con np.broadcast_to ---
     cm_vals = cm_r.values.astype(float)          # (n_rows, n_cols)
     row_sums = cm_vals.sum(axis=1)               # (n_rows,)
     safe = np.where(row_sums == 0, 1.0, row_sums)
@@ -1019,7 +1019,7 @@ def main():
                          f"[{_f(act['regret_ci'][1])}, {_f(act['regret_ci'][2])}]  "
                          f"regret (tie favorevole)={_f(act['mean_value_loss_best'])}  "
                          f"top LLM con pareggi={_f(act['tie_rate'], '{:.1f}%')}")
-        # ponytail: denominatore matrice esplicito (somma celle = unici, non totale)
+        # denominatore matrice esplicito (somma celle = unici, non totale)
         n_tie = int(act['n_states'] - act['n_unique_opt'])
         log_lines.append(f"  confusion: somma celle={act['n_unique_opt']} (stati a ottimo unico) = "
                          f"{act['n_states']} valutati − {n_tie} con pareggi esclusi")

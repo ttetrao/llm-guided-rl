@@ -554,7 +554,7 @@ def run(
         )
         for b, nid in to_query[: min(3, len(to_query))]:
             node = mdp["nodes"][nid]
-            code = f"{nid:04d}"  # ponytail: niente bucket nel prompt, ricostruito al salvataggio
+            code = f"{nid:04d}"  # niente bucket nel prompt, ricostruito al salvataggio
             prompt = build_prompt_for_state(base_prompt, mdp, nid, code)
             qs = " | ".join(
                 f"{a} q_true={q_true_for(mdp, nid, a):.4f}" for a in ACTION_ORDER
@@ -601,7 +601,7 @@ def run(
     def process_batch(batch: list[tuple[str, int]], batch_idx: int):
         assert len(batch) == 1
         b0, nid0 = batch[0]
-        code = f"{nid0:04d}"  # ponytail: niente bucket nel prompt, ricostruito al salvataggio
+        code = f"{nid0:04d}"  # niente bucket nel prompt, ricostruito al salvataggio
         full_prompt = build_prompt_for_state(base_prompt, mdp, nid0, code)
         print(f"[Batch {batch_idx}/{total}] Lanciato {code} len {len(full_prompt)}")
         t0 = time.time()

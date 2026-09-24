@@ -1,6 +1,6 @@
 # Docs per ambiente e lingua
 
-Struttura riorganizzata (ponytail lite):
+Struttura riorganizzata (lite):
 
 ```
 docs/

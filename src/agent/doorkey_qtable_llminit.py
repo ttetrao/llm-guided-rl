@@ -42,7 +42,7 @@ except ImportError:
     load_opt_mdp = None  # type: ignore
 
 TIE_EPS = 1e-6  # pareggio per l'agreement tie-aware con la policy ottima
-# ponytail: standard = pilota doorkey_states.py/qlearning_states.py
+# standard = pilota doorkey_states.py/qlearning_states.py
 STD = {"alpha": 0.25, "gamma": 0.99, "eps_decay": 0.998, "eps_min": 0.05}
 PAIRS = (("LLM-init", "Vanilla-std", "_vs_std"),
          ("LLM-init", "Vanilla (same hp)", "_vs_samehp"))
@@ -494,7 +494,7 @@ def save_run(agent, hist, ev, args, name, label, file_seed, seed, einfo,
              input_path, train_seeds=None, eval_new=None,
              eval_in_seed=None, eval_new_seed=None, opt=None):
     out = AGENTS_DIR / f"{name}.json"
-    # ponytail: seeds in cima; modo singolo identico a prima + chiave "seeds"
+    # seeds in cima; modo singolo identico a prima + chiave "seeds"
     hp = {"episodes": args.episodes, "alpha": args.alpha,
           "gamma": args.gamma, "eps_decay": args.eps_decay,
           "eps_min": args.eps_min, "max_steps": args.max_steps,

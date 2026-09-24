@@ -65,7 +65,7 @@ BOTTLENECK_LABEL = "bottleneck"
 
 
 def _ckpt_label(t: float) -> str:
-    # ponytail: niente "_" (query_gemma fa code.rsplit("_",2))
+    # niente "_" (query_gemma fa code.rsplit("_",2))
     return f"ckpt-{t:g}"
 
 
@@ -337,7 +337,7 @@ def get_states_multi_paths(seeds: list[int], size: int = DEFAULT_SIZE,
 
 
 def _to_jsonable_multi(data: dict) -> dict:
-    # ponytail: "seeds" prima chiave -> in cima al JSON
+    # "seeds" prima chiave -> in cima al JSON
     return {
         "seeds": [int(s) for s in data["seeds"]],
         "size": int(data["size"]),
@@ -374,7 +374,7 @@ def load_or_extract_multi(seeds: list[int], size: int = DEFAULT_SIZE,
         return load_states_multi(json_path)
     per_seed = {s: load_or_extract(seed=s, size=size, out_dir=out_dir,
                                   force=force, **kwargs) for s in seeds}
-    # ponytail: seeds per prima -> in cima al file
+    # seeds per prima -> in cima al file
     data = {"seeds": seeds, "size": size,
             "total_per_seed": kwargs.get("total", 100),
             "per_seed": per_seed}

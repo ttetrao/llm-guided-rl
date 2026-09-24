@@ -88,7 +88,7 @@ def get_output_paths(seed: int, size: int, model_id: str = MODEL_ID, out_dir: Pa
         out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     base = f"llm_results_{size}x{size}_seed{seed}_{model_id.replace(':','_')}"
-    # ponytail: JSON unico per leggibilità (CSV rimosso)
+    # JSON unico per leggibilità (CSV rimosso)
     return out_dir / f"{base}.json"
 
 _STATES_RE = re.compile(r"(?:qlearning_states|doorkey_states)_(\d+)x(\d+)_seed(\d+)$")
@@ -130,7 +130,7 @@ def _states_seed_buckets(qdata: dict, default_seed: int | None):
     return seeds, {seeds[0]: qdata["buckets"]}
 
 def load_docs(lang: str = "it"):
-    # ponytail: docs riorganizzati per ambiente e lingua → docs/doorkey/{it,en}
+    # docs riorganizzati per ambiente e lingua → docs/doorkey/{it,en}
     base = Path(__file__).parent.parent / "docs" / "doorkey" / lang
     if not base.exists():
         # fallback legacy docs/{lang} per compatibilità temporanea
@@ -286,7 +286,7 @@ _file_lock = threading.Lock()
 
 def save_results(path_json: Path, rows: list[ResultRow], seeds: list[int] | None = None,
                  bucket_filter: str | None = None):
-    # ponytail: header seeds in cima; loader accetta anche lista legacy
+    # header seeds in cima; loader accetta anche lista legacy
     seeds = sorted({int(r.seed) for r in rows} if seeds is None else {int(s) for s in seeds})
     with _file_lock:
         with open(path_json, "w", encoding="utf-8") as f:

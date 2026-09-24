@@ -54,7 +54,7 @@ def _bucket_for(sr: float) -> str:
 
 
 def _stage_idx(state: tuple, gi: dict) -> int:
-    """0=find_key, 1=open_door, 2=reach_goal — ponytail: usa gi per goal, altrimenti has_key/door_open"""
+    """0=find_key, 1=open_door, 2=reach_goal usa gi per goal, altrimenti has_key/door_open"""
     x, y = state[0], state[1]
     has_key, door_open = bool(state[3]), bool(state[4])
     gx, gy = gi["goal_pos"]
@@ -80,7 +80,7 @@ class QLearningAgent:
     def act(self, state, greedy=False):
         if not greedy and random.random() < self.epsilon:
             return random.randint(0, self.n_actions - 1)
-        # ponytail: argmax deterministico, tie -> primo
+        # argmax deterministico, tie -> primo
         return int(np.argmax(self.q[state]))
 
     def update(self, s, a, r, s_next, done):
@@ -168,8 +168,8 @@ def train_until_convergence(
     # carica grafo per index mapping
     mdp = load_or_build(seed=seed, size=size, gamma=gamma)
     index = mdp["index"]
-    n_actions = len(ACTIONS_ALL)  # 7 azioni, ponytail: evita gym env
-    # ponytail: seed deterministico per varietà e training
+    n_actions = len(ACTIONS_ALL)  # 7 azioni, evita gym env
+    # seed deterministico per varietà e training
     random.seed(seed)
     np.random.seed(seed)
     agent = QLearningAgent(n_actions=n_actions, alpha=alpha, gamma=gamma, epsilon_decay=epsilon_decay, epsilon_min=epsilon_min)
@@ -177,13 +177,13 @@ def train_until_convergence(
     sr_window = deque(maxlen=window)
     # per varietà randomica: colleziona TUTTI gli unici per bucket, poi campiona 100 a fine
     buckets_all: dict[str, set] = {k: set() for k in BUCKETS}
-    # ponytail: critical = stati post-transizione stage effettivamente calpestati (garantiti se visitati)
+    # critical = stati post-transizione stage effettivamente calpestati (garantiti se visitati)
     critical_all: dict[str, set] = {k: set() for k in BUCKETS}
 
     total_episodes = 0
     final_greedy_sr = 0.0
 
-    # ponytail: training su grafo diretto per velocità (evita env.step gym)
+    # training su grafo diretto per velocità (evita env.step gym)
     # usa mdp transitions, non env, ma mantiene stessa semantica deterministica
     start_state = (mdp["grid_info"]["start_pos"][0], mdp["grid_info"]["start_pos"][1], mdp["grid_info"]["start_dir"], False, False)
     # mappa action index -> n_actions (7) ; ACTIONS_ALL già allineato a env.action_space.n
@@ -191,7 +191,7 @@ def train_until_convergence(
     for ep in range(max_episodes):
         s = start_state
         visited_this_ep: list[tuple] = [s]
-        # ponytail: traccia transizioni effettivamente calpestate per detect stage-change
+        # traccia transizioni effettivamente calpestate per detect stage-change
         critical_this_ep: set[int] = set()
         done = False
         ep_success = 0
@@ -199,14 +199,14 @@ def train_until_convergence(
         max_steps = 1000  # come env._max_episode_steps per 8x8
         while not done and steps < max_steps:
             a = agent.act(s)
-            # transizione via grafo (deterministica, veloce) — ponytail: evita gym
+            # transizione via grafo (deterministica, veloce) evita gym
             sid = index[s]
             trans = mdp["nodes"][sid]["transitions"][a] if a in mdp["nodes"][sid]["transitions"] else mdp["nodes"][sid]["transitions"][0]
             ns = trans["next_state"]
             r = float(trans["reward"])
             done = bool(trans["done"])
             # detect stage-change solo se edge effettivamente percorso
-            # ponytail: stage su s/ns reali, non teorici; include anche terminale (reach_goal) dove stage non cambia (2->2) ma done=True
+            # stage su s/ns reali, non teorici; include anche terminale (reach_goal) dove stage non cambia (2->2) ma done=True
             try:
                 is_stage_jump = _stage_idx(ns, mdp["grid_info"]) > _stage_idx(s, mdp["grid_info"])
                 is_terminal = bool(done)  # done==True <=> ns sul goal
@@ -293,14 +293,14 @@ def train_until_convergence(
     critical_counts: dict[str, int] = {}
     N = int(limit_per_bucket) if limit_per_bucket and limit_per_bucket > 0 else 100
     for k in BUCKETS:
-        # ponytail: critical ⊆ visited per costruzione, nessun teorico
+        # critical ⊆ visited per costruzione, nessun teorico
         crit = list(critical_all[k] & buckets_all[k])
         rest = list(buckets_all[k] - set(crit))
         rng.shuffle(crit)
         rng.shuffle(rest)
         critical_counts[k] = len(crit)
         if significant_only:
-            # ponytail: solo critici, fino a N (minimo per coprire tutti i cambio-stage)
+            # solo critici, fino a N (minimo per coprire tutti i cambio-stage)
             if len(crit) <= N:
                 sampled = crit
             else:

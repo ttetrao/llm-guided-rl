@@ -132,7 +132,7 @@ def _get_next_state(state, action, gi):
         if (fx, fy) == (kx, ky) and not has_key:
             return (x, y, d, True, door_open)
         return state
-    if action == 4:  # drop — ponytail: self-loop (drop mai ottimo, V* invariata)
+    if action == 4:  # drop self-loop (drop mai ottimo, V* invariata)
         return state
     if action == 5:  # toggle
         fx, fy = x + DIRS[d][0], y + DIRS[d][1]
@@ -142,7 +142,7 @@ def _get_next_state(state, action, gi):
             if door_open:
                 return (x, y, d, has_key, False)
         return state
-    if action == 6:  # done — ponytail: self-loop
+    if action == 6:  # done self-loop
         return state
     return state
 
@@ -280,7 +280,7 @@ def build_mdp(seed: int = 1337, size: int = 8, gamma: float = GAMMA) -> dict:
 
     # indice O(1) state -> id
     index: dict[tuple, int] = {s: i for i, s in enumerate(states)}
-    # V* per ogni stato (ponytail: calcolato una volta, non per nodo)
+    # V* per ogni stato ( calcolato una volta, non per nodo)
     V = _value_iteration(gi, gamma=gamma, actions=ACTIONS_ALL)
     nodes: list[dict] = []
 
@@ -365,7 +365,7 @@ def get_paths(seed: int = 1337, size: int = 8, out_dir: Path | str | None = None
 def _to_jsonable(mdp: dict) -> dict:
     """Converte set/tuple/numpy in strutture JSON-serializzabili."""
     gi = mdp["grid_info"]
-    def _i(v):  # ponytail: cast numpy int64 -> int per json
+    def _i(v):  # cast numpy int64 -> int per json
         try:
             return int(v)
         except Exception:
@@ -562,7 +562,7 @@ def main():
             print(f"\n# id={n['id']} state={n['state']} stage={n['stage']} x={n['x']} y={n['y']}")
             print(n["map"])
 
-    # ponytail: self-check minimo (un branch, una transizione)
+    # self-check minimo (un branch, una transizione)
     assert len(mdp["nodes"]) == len(mdp["index"]), "index size mismatch"
     assert all("map" in n and "x" in n and "y" in n for n in mdp["nodes"]), "nodo senza map/x/y"
     assert all("v_value" in n for n in mdp["nodes"]), "nodo senza v_value"
