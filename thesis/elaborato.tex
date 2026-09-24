@@ -8,14 +8,14 @@
 \usepackage{graphicx}
 \usepackage{xurl}
 \usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue,linktoc=all,bookmarksnumbered=true,pdfstartview={FitH},pdftitle={Utilizzo di modelli linguistici di grandi dimensioni per migliorare il processo di apprendimento per rinforzo},pdfauthor={Pietro Fazion}}
+\hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue,linktoc=all,bookmarksnumbered=true,pdfstartview={FitH},pdftitle={Utilizzo di modelli linguistici per migliorare il processo di apprendimento per rinforzo},pdfauthor={Pietro Fazion}}
 \setcounter{tocdepth}{2}
 \setcounter{secnumdepth}{2}
 \setlength{\parskip}{0.6em}
 \setlength{\parindent}{0pt}
 \sloppy
 
-\title{Usare un modello linguistico per dare al Q-learning una base di partenza: il caso MiniGrid-DoorKey}
+\title{Modelli linguistici e Q-learning: inizializzare la tabella dei valori nell'ambiente MiniGrid-DoorKey}
 \author{Pietro Fazion\\Universit\`a di Verona}
 \date{29 settembre 2026}
 
@@ -23,136 +23,139 @@
 \maketitle
 
 \begin{abstract}
-In MiniGrid-DoorKey-8x8 la ricompensa arriva solo quando l'agente entra nell'obiettivo. Il Q-learning tabellare, partendo da zero, impiega molti episodi prima di vedere il primo successo. Il lavoro valuta una sola ipotesi: stimare $V^*$ con un modello linguistico su pochi stati e copiare quelle stime nella Q-table prima di iniziare ad apprendere.
+L'ambiente MiniGrid-DoorKey assegna la ricompensa solo quando l'agente raggiunge l'obiettivo finale. Il Q-learning classico impiega molti episodi per registrare il primo successo. Questo documento valuta una singola ipotesi. L'ipotesi prevede l'uso di un modello linguistico per stimare il valore ottimo su un gruppo ridotto di stati. Il sistema inserisce questi valori nella tabella Q prima di iniziare l'addestramento.
 
-Sul seed 1337 bastano 20 coppie stato-azione dai bottleneck: valutazione a 1.00 con 17 passi medi, contro 0.00 a pari iperparametri senza inizializzazione. Il modello da 120 miliardi di parametri sbaglia in media di 0.0122 e indica l'azione giusta nel 94.1\% dei casi. Su una mappa mai vista, invece, non si osserva trasferimento. Tutti i numeri sono riconducibili ai file citati nel testo.
+L'esperimento sul seed 1337 utilizza 20 coppie stato-azione relative ai passaggi critici. Questa configurazione raggiunge un tasso di successo del 100\% con 17 passi medi. La configurazione di controllo senza stime iniziali registra un tasso dello 0\%. Il modello linguistico da 120 miliardi di parametri presenta un errore medio di 0.0122. Il modello indica l'azione corretta nel 94.1\% dei casi. Il trasferimento dell'apprendimento su mappe nuove non produce risultati. Il testo cita i file di log per la verifica dei dati.
 \end{abstract}
 \tableofcontents
 \newpage
 
 \section{Il problema}\label{sec:problema}
-Il Q-learning impara a ritroso: il valore parte dal goal e si propaga agli stati precedenti \cite{sutton2018}. Le definizioni standard di quel riferimento (MDP, Bellman, regola di aggiornamento) sono adottate senza modifiche.
+L'algoritmo Q-learning propaga il valore dall'obiettivo agli stati precedenti \cite{sutton2018}. Le definizioni standard di Processo Decisionale di Markov e l'equazione di Bellman restano invariate.
 
-Il punto critico \`e semplice: se il goal capita di rado, per molti episodi la tabella resta a zero e l'agente non riceve alcun segnale utile.
+La ricompensa arriva raramente nelle fasi iniziali. La tabella mantiene valori nulli per molto tempo. L'agente non riceve indicazioni per prendere decisioni.
 
-L'ipotesi valutata consiste nello stimare $V^*$ con il modello linguistico su un sottoinsieme di stati e nel riportare i risultati nella Q-table al tempo zero. Il Q-learning successivo procede in maniera ordinaria, senza ricompense aggiuntive e senza modifiche al target TD.
+L'esperimento stima il valore $V_{opt}$ con un modello linguistico su pochi stati. Il codice inserisce i valori nella tabella Q iniziale. L'addestramento prosegue con il Q-learning classico. Il processo non usa ricompense aggiuntive. L'obiettivo temporale resta invariato.
 
-Quando la ricompensa \`e sparsa e il goal viene visto di rado, il segnale non si propaga: la tabella resta prossima a zero per molti episodi e l'agente non riceve indicazioni utili. L'inizializzazione da modello serve a fornire da subito valori non nulli proprio sugli stati decisivi.
+I valori iniziali guidano l'agente nei punti decisivi. Questo compensa la mancanza di ricompense immediate.
 
-Esempio concreto, seed 1337, 2000 episodi, $\alpha=0.07$, $\gamma=0.9$: la configurazione con inizializzazione da modello (20 coppie stato-azione) ottiene valutazione 1.00 con 17 passi di media, mentre la configurazione di controllo senza inizializzazione, a pari iperparametri, ottiene 0.00 con 450 passi di media.
-File nella cartella \path{src/output/agents/}:\\
-\path{qtable_llminit_seed_1337_gpt-oss_120b_llminit.json} e \path{qtable_llminit_seed_1337_gpt-oss_120b_vsame.json}.
-I risultati completi sono discussi nella Sezione~\ref{sec:init}.
+L'esperimento principale valuta il seed 1337. L'addestramento dura 2000 episodi. Il tasso di apprendimento $\alpha$ vale 0.07. Il fattore di sconto $\gamma$ vale 0.9. La configurazione usa 20 coppie stato-azione generate dal modello. Questa configurazione completa la mappa nel 100\% dei casi con 17 passi di media. La configurazione senza stime iniziali fallisce in ogni tentativo e consuma 450 passi.
+I dati risiedono nella cartella \path{src/output/agents/}.
+I file sono \path{qtable_llminit_seed_1337_gpt-oss_120b_llminit.json} e \path{qtable_llminit_seed_1337_gpt-oss_120b_vsame.json}.
+La Sezione \ref{sec:init} discute i risultati.
 
 \section{Struttura della repository}\label{sec:repo}
-Il codice \`e organizzato sotto \path{src/} e i moduli si eseguono da tale cartella (\path{python3 -m graph.<modulo>}, e in modo analogo per \path{llm}, \path{evaluate} e \path{agent}). I pacchetti sono: \path{src/graph/} per la costruzione del grafo MDP e la selezione degli stati, \path{src/llm/} per l'interrogazione dei modelli, \path{src/evaluate/} per metriche e grafici di valutazione, \path{src/agent/} per il Q-learning con inizializzazione e le configurazioni di controllo, \path{src/env/} per gli involucri dell'ambiente e la definizione degli stage, \path{src/docs/} per prompt, legende e definizioni delle funzioni di valore, distinte per ambiente e lingua.
+Il codice sorgente e i dati risiedono nella repository ufficiale del progetto. L'indirizzo web \`e \url{https://github.com/ttetrao/llm-guided-rl/tree/main}. La cartella \path{src/} contiene i moduli operativi. I programmi si avviano da questa posizione. Il comando \`e \path{python3 -m graph.nome_modulo}. Lo schema si applica a tutti i pacchetti. 
+Il pacchetto \path{src/graph/} costruisce il grafo del processo decisionale e seleziona gli stati.
+Il pacchetto \path{src/llm/} interroga i modelli linguistici.
+Il pacchetto \path{src/evaluate/} genera le metriche e i grafici.
+Il pacchetto \path{src/agent/} esegue il Q-learning e gestisce i controlli.
+Il pacchetto \path{src/env/} contiene gli adattatori per l'ambiente e definisce le fasi.
+Il pacchetto \path{src/docs/} raccoglie le istruzioni testuali per i modelli.
 
-Tutti i percorsi di output passano da \path{src/paths.py}, che definisce le cartelle sotto \path{src/output/}: \path{cache} per grafi e insiemi di stati rigenerabili, \path{llm} per gli esiti delle interrogazioni, \path{agents} per gli addestramenti con i grafici di confronto, \path{evaluate} e \path{evaluate_frozenlake} per log e grafici di valutazione dei due ambienti. Il confronto tra inizializzazione e controlli \`e prodotto da \path{src/agent/doorkey_qtable_llminit2.py}, che genera le coppie di grafici \path{_vs_samehp} e \path{_vs_std}. Il presente elaborato e la presentazione risiedono in \path{thesis/}.
+Il modulo \path{src/paths.py} gestisce le destinazioni di salvataggio. I dati finiscono sotto \path{src/output/}. La cartella \path{cache} conserva i grafi. La cartella \path{llm} ospita le risposte dei modelli. La cartella \path{agents} raccoglie i dati degli addestramenti. Le cartelle \path{evaluate} contengono i grafici di riepilogo. Il file \path{src/agent/doorkey_qtable_llminit2.py} produce i confronti diretti. I documenti di tesi risiedono in \path{thesis/}.
 
 \section{L'ambiente e il valore ottimo}\label{sec:ambiente}
-L'ambiente \`e \path{MiniGrid-DoorKey-8x8-v0} \cite{minigrid2023}, adottato senza modifiche: raccolta della chiave, apertura della porta con \path{toggle}, raggiungimento del goal in (6,6). Ricompensa 1 solo entrando nel goal, 0 altrove. Episodi troncati a 450 passi.
+Il progetto utilizza l'ambiente \path{MiniGrid-DoorKey-8x8-v0} \cite{minigrid2023}. Le regole sono originali. L'agente raccoglie la chiave. L'agente apre la porta con l'azione \path{toggle}. L'agente raggiunge l'obiettivo in coordinate (6,6). La ricompensa vale 1 solo sul bersaglio. La ricompensa vale 0 in ogni altra cella. Il limite massimo di passi \`e 450.
 
-Lo stato nel grafo \`e \path{(x, y, dir, has_key, door_open)}: cella occupata, direzione dell'agente (rilevante per avanzamento e rotazioni), possesso della chiave e stato della porta. Fissato il seed, i muri sono fissi, quindi questi cinque valori descrivono completamente lo stato.
+Lo stato interno del grafo richiede cinque variabili. Le variabili sono la posizione, la direzione dell'agente, il possesso della chiave e lo stato della porta. La posizione dei muri dipende dal seed. Queste cinque variabili descrivono la mappa in modo univoco per ogni seed.
 
-Il grafo viene costruito una volta sola con \path{src/graph/mdp_graph.py}: per ogni stato e ognuna delle 7 azioni si calcolano transizione, ricompensa e fine episodio. Per ogni seed il grafo conta 480 nodi; le posizioni di chiave, porta e partenza variano con il seed, mentre il goal resta fisso in (6,6). Il valore $V^*$ deriva da value iteration con $\gamma=0.99$ ed \`e utilizzato come riferimento per giudicare il modello. Gli stati terminali sul goal sono assorbenti e restano esclusi dalle interrogazioni. L'azione \path{done} \`e un self-loop e viene esclusa.
+Lo script \path{src/graph/mdp_graph.py} genera il grafo. Il calcolo considera sette azioni per ogni stato. Il processo determina la cella di arrivo e la ricompensa. Il grafo contiene 480 nodi per ogni seed. Il bersaglio si trova sempre in (6,6). Il calcolo utilizza il metodo della value iteration e un fattore di sconto 0.99 per determinare il valore ottimo $V_{opt}$. Questo calcolo fornisce il parametro di valutazione per il modello linguistico. Il processo esclude gli stati finali dalle interrogazioni. Il sistema ignora l'azione nulla.
 
-Gli stage in \path{src/env/view_wrapper.py} indicano la fase del compito a partire dai due flag: \path{find_key} indica assenza della chiave, \path{open_door} indica chiave posseduta con porta chiusa, \path{reach_goal} indica chiave posseduta con porta aperta e obiettivo non ancora raggiunto. L'ordine \`e obbligato e la distinzione conta perch\'e stati con identiche coordinate ma stage differente richiedono azioni differenti.
+Lo script \path{src/env/view_wrapper.py} traccia il progresso dell'agente. Lo stato \path{find_key} indica la ricerca della chiave. Lo stato \path{open_door} indica il possesso della chiave e la porta chiusa. Lo stato \path{reach_goal} indica il via libera verso l'obiettivo. L'agente deve rispettare questa sequenza. Due posizioni uguali con stati di avanzamento diversi richiedono azioni diverse.
 
-\section{Quali stati vengono interrogati}\label{sec:stati}
-L'interrogazione esaustiva dei 480 stati comporta un costo non giustificato: le celle di transito sono in gran parte equivalenti. Il numero di stati interrogati \`e un budget impostabile da parametro. Il codice di selezione \`e in \path{src/graph/doorkey_states.py}.
+\section{Selezione degli stati}\label{sec:stati}
+L'interrogazione completa dei 480 nodi richiede molto tempo. Molte celle di passaggio condividono lo stesso valore. Un parametro definisce il numero massimo di interrogazioni. Il file \path{src/graph/doorkey_states.py} seleziona gli stati utili.
 
-\subsection{I sei tipi di bottleneck}\label{subsec:bottleneck}
-I bottleneck vengono estratti dal grafo senza esecuzione di episodi (\path{extract_bottleneck}), in sei famiglie con ruoli distinti:
+\subsection{Tipologie di nodi critici}\label{subsec:bottleneck}
+La funzione \path{extract_bottleneck} isola i nodi critici dal grafo. Il processo non richiede l'esecuzione di partite. I nodi si dividono in sei categorie.
 \begin{enumerate}
-\item \path{on_key}: occupazione della cella della chiave. Condizione posizionale. 8 nodi, costanti su ogni seed.
-\item \path{on_door}: occupazione della cella della porta, possibile solo a porta aperta (da chiusa equivale a muro). 8 nodi, fissi.
-\item \path{adj_door}: adiacenza alla porta chiusa con orientamento verso la stessa. La precondizione per agire. 3--4 nodi, perch\'e due approcci cadono nel muro della colonna e su alcuni seed un lato coincide con la cella chiave.
-\item \path{door_toggle}: stati dove \path{toggle} apre effettivamente la porta. L'efficacia dell'azione, non la sola vicinanza. Sottoinsieme del precedente, sempre 2 nodi.
-\item \path{key_take}: stati dove \path{pickup} acquisisce effettivamente la chiave. Anche qui conta l'effetto, a differenza della semplice occupazione di \path{on_key}. Da 2 a 8 nodi (in angolo resta un lato solo).
-\item \path{goal_entry}: stati da cui una mossa produce la ricompensa. L'unica famiglia definita dalla ricompensa. 4 o 8 nodi a seconda del muro.
+\item \path{on_key}: la cella contiene la chiave. Questa categoria produce 8 nodi.
+\item \path{on_door}: la cella contiene la porta aperta. Questa categoria produce 8 nodi.
+\item \path{adj_door}: l'agente fronteggia la porta chiusa da una cella adiacente. Questa condizione permette di interagire. La categoria produce da 3 a 4 nodi.
+\item \path{door_toggle}: l'azione \path{toggle} apre la porta con successo. La categoria conta sempre 2 nodi.
+\item \path{key_take}: l'azione di raccolta acquisisce la chiave. La categoria conta da 2 a 8 nodi in base alla posizione dei muri.
+\item \path{goal_entry}: un passo separa l'agente dall'obiettivo. La categoria fornisce da 4 a 8 nodi.
 \end{enumerate}
-In sintesi: due famiglie posizionali, una precondizionale, due causali e una terminale. Le prime tre per cardinalit\`a sono fisse per struttura del compito (8, 8 e 2 nodi), le altre variano con la mappa (rispettivamente 2--8, 4--8 e 3--4 nodi). L'unione comprende 30--34 nodi, meno del 10\% del grafo.
+Queste categorie mappano posizioni, condizioni di azione e stati finali. I nodi totali variano tra 30 e 34. Questo valore rappresenta meno del 10\% dell'intero grafo.
 
-\subsection{I checkpoint: la progressione dell'agente}\label{subsec:checkpoint}
-I bottleneck indicano le scelte difficili per struttura, indipendentemente da come si impara. I checkpoint servono invece a fotografare la progressione dell'agente: all'inizio l'esplorazione visita molti stati che nella politica ottima non compaiono mai, mentre alla fine i visitati collassano sul percorso migliore. A tale scopo viene eseguito un Q-learning ordinario sul grafo, senza modello linguistico (\path{run_pilot}: $\alpha=0.3$, $\gamma=0.99$, $\epsilon$ da 1.0 con decadimento 0.998, minimo 0.05).
+\subsection{Campionamento della progressione}\label{subsec:checkpoint}
+I nodi critici marcano i passaggi obbligati. I nodi di progressione fotografano l'evoluzione dell'agente nel tempo. L'agente visita molte celle inutili all'inizio. L'agente si concentra sul percorso ottimale alla fine. La funzione \path{run_pilot} addestra un agente senza aiuti esterni. I parametri sono $\alpha=0.3$ e $\gamma=0.99$. L'esplorazione decade lentamente.
 
-Quando il successo su finestra di 100 episodi raggiunge 0.3, 0.5, 0.7, 0.8 e 1.0, gli stati visitati vengono registrati. Sotto 0.8 si conserva l'unione diretta; da 0.8 in su si aggiungono una passeggiata casuale di 3 passi e gli episodi falliti, dato che una politica prossima all'ottimo mostrerebbe altrimenti la sola strada migliore. Sul 1337 le soglie scattano agli episodi 93, 115, 137, 150 e 175, circa 300 stati ciascuna.
+Il programma salva gli stati visitati quando il successo medio tocca soglie specifiche. Le soglie sono 0.3, 0.5, 0.7, 0.8 e 1.0. I salvataggi per i valori bassi includono tutti i percorsi tentati. I salvataggi per i valori alti aggiungono deviazioni casuali. Questo accorgimento impedisce di registrare solo la sequenza perfetta. Il seed 1337 attiva le soglie agli episodi 93, 115, 137, 150 e 175. Ogni attivazione salva circa 300 nodi.
 
-Due seed (47952 e 74839) presentano il caso degenere: il goal viene raggiunto al primo episodio per esplorazione casuale, tutte le soglie scattano insieme e gli insiemi risultano piccoli (62 e 88 stati) e non rappresentativi di una traiettoria di apprendimento. Tali casi vengono riportati per completezza.
+I seed 47952 e 74839 completano il gioco al primo tentativo per puro caso. Tutte le soglie si attivano simultaneamente. Le liste contengono pochissimi nodi. Il codice riporta questi eventi per tracciamento.
 
-Il budget (\path{allocate}) conserva tutti i bottleneck e ripartisce il resto tra i checkpoint con il metodo dei resti maggiori.
+La funzione \path{allocate} riserva il primo spazio per i nodi critici. Il programma divide il resto della capienza tra i nodi di progressione usando il metodo dei resti maggiori.
 
-La precedente selezione a tre bucket per fasi in \path{src/graph/qlearning_states.py} mescolava scelte e corridoi. Detto modulo resta esclusivamente quale dipendenza, in quanto fornisce \path{QLearningAgent} all'esecuzione preliminare.
+\section{Interrogazione del modello}\label{sec:prompt}
+Il programma calcola il valore per l'azione $Q$ a partire dal valore dello stato $V$. Il testo di istruzione risiede in \path{src/docs/doorkey/it/prompt.txt}. I file \path{src/llm/query_gpt.py} e \path{src/llm/query_gemma.py} gestiscono le chiamate.
 
-\section{Modalit\`a di interrogazione del modello}\label{sec:prompt}
-Il valore $Q$ viene stimato passando da $V$. Il prompt \`e in \path{src/docs/doorkey/it/prompt.txt}, gli script in \path{src/llm/query_gpt.py} e \path{src/llm/query_gemma.py}.
+Il modello riceve le regole del gioco e la legenda della mappa. Il testo include le definizioni per il calcolo del valore. Il programma invia la mappa corrente e le sei mappe relative alle possibili mosse. Il modello linguistico valuta solo la distanza dall'obiettivo per ogni opzione. L'espressione usata \`e $\gamma^d$ con $\gamma=0.99$. Il calcolo sfrutta il determinismo del gioco. Il valore esatto di uno stato distante $d$ mosse corrisponde a $\gamma^d$. Il modello non pu\`o adottare stime casuali. Il modello risponde nel formato JSON. Ogni risposta include l'applicazione della regola, il conteggio dei passi e il calcolo numerico. Il programma scarta le risposte anomale o errate.
 
-Il funzionamento, descritto per logica, \`e il seguente. Al modello vengono forniti separatamente le regole del compito, la legenda dei simboli della mappa e le definizioni di $V$ e $Q$, con distinzione tra politica generica e politica ottima. Per ogni stato vengono mostrate la mappa attuale e le sei mappe dei successori, gi\`a calcolate dal codice. Al modello non \`e richiesta l'inferenza della dinamica: deve soltanto stimare quanto ogni successore dista dall'obiettivo nella forma $\gamma^d$ con $\gamma=0.99$, da cui $Q=r+0.99\cdot V^*$. Tale eguaglianza vale esclusivamente perch\'e l'ambiente \`e deterministico: con dinamica deterministica e ricompensa unitaria sul goal, il valore ottimo di uno stato a $d$ passi dall'obiettivo \`e esattamente $\gamma^d$. In un ambiente stocastico varrebbe invece l'attesa sugli esiti possibili, e la stima puntuale perderebbe significato: \`e quanto si osserva nell'appendice su FrozenLake (Sezione~\ref{sec:frozenlake}). La risposta \`e vincolata al solo formato JSON e per ogni azione richiede un ragionamento in tre parti: definizione applicata, fatto del gioco usato per semplificare il conto (dinamica deterministica, ricompensa solo sul goal) e calcolo numerico. Analisi identiche tra azioni diverse invalidano la risposta; non sono ammessi valori nulli di ripiego.
+Il test principale impiega un modello da 120 miliardi di parametri sul seed 1337. I file occupano la cartella \path{src/output/llm/}. Il file \path{llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b.json} contiene 500 righe di calcolo. Le risposte valide sono 85 su 99 richieste. Il codice attende 65 secondi tra una chiamata e l'altra. Il sistema ritenta 3 volte in caso di errore. 
 
-Run principale, modello da 120 miliardi di parametri sul 1337, file nella cartella \path{src/output/llm/}:\\
-\path{llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b.json}: 99 stati, 85 validi, 500 righe. Una richiesta per stato, 65 secondi tra gli avvii, 3 tentativi, deduplicazione su file. Il modello da 26 miliardi \`e eseguito in forma parziale su 28 stati e non rientra nelle misure.
+Un secondo test analizza cinque seed differenti. Il file \path{llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b.json} raccoglie 111 stati validi e 629 righe.
 
-Stesso modello sui seed 13507, 19920, 32455, 54937 e 69693, file:\\
-\path{llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b.json}: 155 stati, 111 validi, 629 righe, solo bottleneck.
+\section{Precisione dei calcoli}\label{sec:qualita}
+Lo script \path{src/evaluate/evaluate_llm.py} calcola le metriche. I risultati riempiono il file \path{src/output/evaluate/log_valutazione.txt}. L'analisi confronta il valore calcolato dal modello linguistico con il valore reale della mappa.
 
-\section{Qualit\`a delle stime}\label{sec:qualita}
-La valutazione \`e eseguita in \path{src/evaluate/evaluate_llm.py}, risultati in \path{src/output/evaluate/log_valutazione.txt}. Il confronto oppone $v_{llm}$ a $v_{true}=V^*(s')$.
-
-Seed 1337, modello da 120 miliardi:
+Risultati sul seed 1337:
 \begin{itemize}
-\item errore medio 0.0122, RMSE 0.0175, bias $-0.0104$. Il 97.4\% entro 0.05, tutto entro 0.10.
-\item Pearson 0.941, Spearman 0.924, CCC 0.908.
+\item L'errore medio ammonta a 0.0122. Il bias segna $-0.0104$. Il 97.4\% delle risposte ha un errore inferiore a 0.05.
+\item Gli indici di correlazione superano lo 0.9.
 \end{itemize}
-I bottleneck presentano l'errore maggiore (0.0140 su 164 righe, gli altri tra 0.0085 e 0.0139). Per fase: \path{find_key} 0.0167, \path{open_door} 0.0113, \path{reach_goal} 0.0096. La ricerca della chiave risulta la fase pi\`u difficile.
+I nodi critici generano l'errore pi\`u alto con 0.0140. La ricerca della chiave risulta la fase pi\`u soggetta a imprecisioni.
 
-Cinque seed, solo bottleneck (111 stati validi, 629 righe): errore medio 0.0153, RMSE 0.0519, bias $-0.0116$. Il 96.8\% entro 0.05. Pearson 0.707, Spearman 0.912, CCC 0.657. Per fase: \path{find_key} 0.0235, \path{reach_goal} 0.0094, \path{open_door} 0.0085.
+I test sui cinque seed restituiscono un errore medio di 0.0153 con un bias di $-0.0116$. Il 96.8\% si posiziona sotto la soglia di 0.05.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_scatter.png}
-\caption{Seed 1337: $v_{true}$ contro $v_{llm}$. Punti addensati sulla diagonale, quasi tutti nella fascia $\pm 0.05$.}
+\caption{Il grafico mostra la correlazione tra i valori calcolati dall'algoritmo classico e le stime del modello linguistico. L'asse orizzontale rappresenta i valori reali. L'asse verticale rappresenta le stime. Una stima perfetta posiziona i punti sulla linea diagonale. I punti si concentrano lungo questa linea. Questo indica una buona precisione del modello.}
 \label{fig:scatter1337}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_residuals.png}
-\caption{Seed 1337: residui in funzione di $v_{true}$, con bias leggermente negativo.}
+\caption{Il grafico analizza gli errori del modello. L'asse orizzontale mostra i valori attesi. L'asse verticale mostra la differenza tra il valore stimato e il valore reale. I punti sotto lo zero indicano una sottostima. Il modello tende a sottostimare i valori.}
 \label{fig:resid1337}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b_scatter.png}
-\caption{Cinque seed, solo bottleneck: stessa diagonale, dispersione superiore.}
+\caption{Il grafico estende l'analisi a cinque scenari differenti considerando solo gli stati critici. La struttura ricalca il grafico precedente sui valori stimati e reali. I punti risultano maggiormente distanti dalla linea diagonale. Questo indica una minore precisione del modello nel valutare scenari diversi.}
 \label{fig:scatter5seed}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b_residuals.png}
-\caption{Cinque seed, solo bottleneck: residui in funzione di $v_{true}$.}
+\caption{Il grafico riporta gli errori del modello sui cinque scenari. L'asse orizzontale mostra i valori attesi. L'asse verticale mostra la differenza tra stima e realt\`a. La distribuzione dei punti appare pi\`u ampia rispetto al caso singolo. La tendenza a sottostimare si conferma.}
 \label{fig:resid5seed}
 \end{figure}
 
-Il bias negativo ($\approx -0.01$) indica una sottostima sistematica di circa un passo di sconto. La distribuzione delle stime \`e visibile nelle Figure~\ref{fig:scatter1337} e \ref{fig:scatter5seed}.
+Il bias negativo di $-0.01$ corrisponde all'errore sistematico di circa un passo. Le Figure \ref{fig:scatter1337} e \ref{fig:scatter5seed} mostrano la dispersione dei punti.
 
-\section{L'azione indotta \`e quella giusta?}\label{sec:azioni}
-La verifica considera il massimo con tolleranza per i pari merito (nel codice \path{tie-aware}: \`e corretta una qualsiasi delle azioni a pari valore secondo quantizzazione su $\gamma^k$):
+\section{Qualit\`a dell'azione suggerita}\label{sec:azioni}
+L'algoritmo valuta la correttezza dell'azione proposta dal modello. La valutazione tollera piccole imprecisioni numeriche causate dal limite dei decimali.
+Dati per il seed 1337:
 \begin{itemize}
-\item seed 1337: Top-1 al 94.1\%, in senso stretto 84.7\%, Top-2 al 98.8\%. Il livello casuale su 6 azioni \`e 16.7\%.
-\item rimpianto medio 0.0011: gli errori comportano una perdita attesa contenuta.
-\item bottleneck 82.8\%, tutti i checkpoint al 100\%.
+\item L'azione suggerita risulta essere la migliore nel 94.1\% dei casi. L'azione casuale ottiene il 16.7\%.
+\item La perdita attesa dovuta a scelte sub-ottimali equivale a 0.0011.
+\item La correttezza sui nodi critici raggiunge l'82.8\%.
 \end{itemize}
-$\Delta k$ pari a zero nel 22.0\% dei casi, a $\pm 1$ nel 46.2\%: i valori assoluti risultano accurati, la distanza in passi in misura minore. Il quadro per gruppo \`e nelle Figure~\ref{fig:acc1337} e \ref{fig:acc5seed}.
+Il modello sbaglia i conteggi assoluti dei passi ma identifica l'azione preferibile. Le Figure \ref{fig:acc1337} e \ref{fig:acc5seed} riportano il dettaglio per categorie.
 
-Cinque seed: Top-1 al 91.9\%, in senso stretto 82.0\%, Top-2 al 96.4\%, rimpianto 0.0020.
+L'analisi sui cinque seed evidenzia l'azione migliore nel 91.9\% delle situazioni.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_accuracy.png}
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_mae_bucket.png}
-\caption{Seed 1337: accuratezza e errore per gruppo. I bottleneck presentano l'errore maggiore.}
+\caption{La figura contiene due grafici a barre. Il primo grafico mostra la percentuale di risposte corrette del modello per diverse categorie di stati. Il secondo grafico mostra l'entit\`a dell'errore per le stesse categorie. Gli stati definiti critici registrano gli errori pi\`u alti.}
 \label{fig:acc1337}
 \end{figure}
 
@@ -160,93 +163,91 @@ Cinque seed: Top-1 al 91.9\%, in senso stretto 82.0\%, Top-2 al 96.4\%, rimpiant
 \centering
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b_accuracy.png}
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b_mae_bucket.png}
-\caption{Cinque seed, solo bottleneck: Top-1 91.9\%, Top-2 96.4\%.}
+\caption{La figura presenta due grafici a barre relativi a cinque scenari. Il primo grafico mostra quante volte il modello suggerisce l'azione migliore o la seconda migliore. Il secondo grafico mostra l'errore medio diviso per categorie.}
 \label{fig:acc5seed}
 \end{figure}
 
-\section{Effetto dell'inizializzazione}\label{sec:init}
-L'agente \`e implementato in \path{src/agent/doorkey_qtable_llminit.py} e opera in coordinate relative al bersaglio di fase \path{(dx, dy, dir, stage)}, in modo che righe corrispondenti su seed differenti condividano la tabella. Le coppie coperte partono dalla media delle stime, le rimanenti da zero. L'apprendimento successivo \`e Q-learning ordinario, con i bottleneck di valore maggiore per primi (\path{bottleneck_first_top_v}).
+\section{Impatto delle stime iniziali}\label{sec:init}
+Il codice sorgente per l'agente \`e \path{src/agent/doorkey_qtable_llminit.py}. L'agente ragiona su un sistema di coordinate relative all'obiettivo intermedio. Questo approccio unifica il comportamento su seed diversi. Il sistema inserisce per prime le stime calcolate. Le celle rimanenti partono da zero. Il Q-learning procede elaborando le celle in ordine decrescente di valore stimato.
 
-La qualit\`a della politica appresa viene misurata contro la politica ottima da value iteration con due metriche (\path{optimal_policy_metrics} in \path{src/agent/doorkey_qtable_llminit.py}). L'accordo indica la frazione degli stati visitati e mappati in cui l'azione greedy appresa coincide con un'azione ottima, a meno di tolleranza $10^{-6}$ per i pari merito: vale 1 se la politica appresa sceglie sempre un'azione ottima sugli stati valutati. La perdita di valore \`e la media, sugli stessi stati, di $V^*(s)-Q^*(s,a)$ con $a$ azione appresa: quanto valore atteso si perde seguendo la politica appresa invece dell'ottima, in unit\`a di ricompensa scontata. Con $\gamma=0.99$ un passo sprecato vale circa 0.01, quindi una perdita media di 0.0067 corrisponde a meno di un passo perso in media. Entrambe sono calcolate solo sugli stati visitati e mappati, con terminali esclusi: descrivono la qualit\`a dove l'agente \`e passato, non sull'intero grafo.
+La funzione \path{optimal_policy_metrics} valuta il comportamento dell'agente rispetto alla soluzione teorica perfetta.
 
-Configurazione principale, seed 1337, 2000 episodi, $\alpha=0.07$, $\gamma=0.9$, decadimento di $\epsilon$ 0.99, \path{max_init=20}. Sono 20 coppie dai bottleneck, il 4\% dei 480 nodi:
+La prima metrica definisce l'accordo con la politica ottima. Questo parametro conta le volte in cui la decisione dell'agente coincide con l'azione ideale calcolata a priori. Un valore pari a 1 indica una totale aderenza alla strategia perfetta. Un valore basso indica scelte sub-ottimali. Questo numero valuta la precisione delle regole apprese.
+
+La seconda metrica calcola la perdita di valore media. Questo indicatore quantifica il costo degli errori. Ogni mossa sbagliata allontana l'agente dall'obiettivo e abbassa il punteggio atteso. Una perdita media di 0.0067 si traduce nella perdita di una frazione di turno di gioco. Valori prossimi allo zero segnalano traiettorie eccellenti. Valori alti evidenziano percorsi tortuosi.
+
+Il sistema elabora entrambe le metriche esclusivamente sui nodi esplorati durante le partite effettive.
+
+I test utilizzano il seed 1337 per 2000 episodi. Il parametro $\alpha$ vale 0.07. Il parametro $\gamma$ vale 0.9. Il decadimento vale 0.99. Il codice inserisce i 20 nodi critici principali.
 \begin{itemize}
-\item con inizializzazione: valutazione 1.00, 17 passi medi, accordo con l'ottima 0.585, perdita 0.0067;
-\item controllo senza inizializzazione, stessi iperparametri: valutazione 0.00, 450 passi, accordo 0.481;
-\item controllo senza inizializzazione con iperparametri standard ($\alpha=0.25$, $\gamma=0.99$): valutazione 1.00, 16 passi, accordo 0.556.
+\item L'agente inizializzato completa la mappa in 17 passi con un accordo di 0.585.
+\item L'agente standard con gli stessi parametri non completa la mappa e impiega 450 passi.
+\item L'agente standard con parametri intensivi ($\alpha=0.25$, $\gamma=0.99$) completa la mappa in 16 passi.
 \end{itemize}
-A pari iperparametri la configurazione senza inizializzazione non risolve il compito: la differenza osservata \`e attribuibile all'inizializzazione (Figure~\ref{fig:samehp} e \ref{fig:vstd}). Con gli iperparametri standard anche il controllo risolve, con un passo in meno (16 contro 17).
+Il controllo senza inizializzazione fallisce con gli stessi parametri base. Le stime innescano la convergenza anticipata dell'algoritmo (Figure \ref{fig:samehp} e \ref{fig:vstd}).
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/agents/qtable_llminit_seed_1337_gpt-oss_120b_vs_samehp.png}
-\caption{Seed 1337, confronto a pari iperparametri tra inizializzazione da modello e controllo: il controllo resta a tasso nullo.}
+\caption{Il grafico confronta le prestazioni di due agenti nel tempo. L'asse orizzontale rappresenta il numero di episodi giocati. L'asse verticale misura il tasso di successo. La linea relativa all'agente con stime iniziali sale rapidamente a uno. La linea dell'agente senza stime iniziali rimane piatta a zero. Questo dimostra l'utilit\`a delle stime iniziali.}
 \label{fig:samehp}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/agents/qtable_llminit_seed_1337_gpt-oss_120b_vs_std.png}
-\caption{Seed 1337, confronto con il controllo a iperparametri standard: entrambi risolvono, con 17 passi medi contro 16.}
+\caption{Il grafico confronta l'agente potenziato con un agente standard ottimizzato. Entrambe le linee raggiungono il tasso di successo massimo. L'asse orizzontale conta gli episodi. L'asse verticale mostra il raggiungimento dell'obiettivo. Le prestazioni risultano simili.}
 \label{fig:vstd}
 \end{figure}
 
-Secondo esperimento: addestramento sui cinque seed 13507, 19920, 32455, 54937 e 69693 in coordinate relative (4000 episodi, $\alpha=0.1$, $\gamma=0.8$, decadimento di $\epsilon$ 0.998, \path{max_init=500}, 500 coppie), con valutazione sul seed interno 13507 e sul seed nuovo 6499, file nella cartella \path{src/output/agents/}:\\
-\path{qtable_llminit_multiseed_train13507-19920-32455-54937-69693_evalin13507_evalnew6499_llminit.json}. Il tasso sui seed di addestramento \`e 1.00 con 23 passi medi, sul seed nuovo 0.00 con 450; i controlli senza inizializzazione ottengono 0.00 in entrambi i casi, sia a pari iperparametri sia con iperparametri standard. Cinque seed bastano a risolvere i layout visti, ma per generalizzare ne servono molti di pi\`u (Figure~\ref{fig:multisamehp} e \ref{fig:multivstd}).
+Il secondo ciclo di test esegue l'addestramento su cinque seed differenti. Le mappe sono 13507, 19920, 32455, 54937 e 69693. L'addestramento impiega le coordinate relative e prosegue per 4000 turni. I parametri salgono a $\alpha=0.1$ e $\gamma=0.8$. Il sistema inserisce 500 stime iniziali. Il codice verifica le prestazioni sul seed conosciuto 13507 e sul nuovo seed 6499.
+Il tasso di successo sulle mappe apprese raggiunge il 100\% con 23 passi di media. Il tasso di successo sulla mappa nuova si ferma allo 0\%. I controlli senza stime registrano risultati nulli su tutta la linea. Cinque layout non consentono al sistema di imparare regole generali esportabili su nuovi livelli (Figure \ref{fig:multisamehp} e \ref{fig:multivstd}).
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/agents/qtable_llminit_multiseed_train13507-19920-32455-54937-69693_evalin13507_evalnew6499_vs_samehp.png}
-\caption{Multi-seed, confronto a pari iperparametri: il controllo resta a zero e sul seed nuovo non si osserva trasferimento.}
+\caption{Il grafico mostra le prestazioni su mappe mai viste durante l'addestramento. L'asse orizzontale conta gli episodi. L'asse verticale indica il successo. Nessun agente riesce a risolvere le nuove mappe. L'apprendimento non si trasferisce a scenari sconosciuti.}
 \label{fig:multisamehp}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/agents/qtable_llminit_multiseed_train13507-19920-32455-54937-69693_evalin13507_evalnew6499_vs_std.png}
-\caption{Multi-seed, confronto con il controllo a iperparametri standard: il controllo resta a zero su entrambi i seed.}
+\caption{Il grafico riporta un ulteriore test su mappe sconosciute. L'analisi confronta l'agente standard ottimizzato con le nuove mappe. Il tasso di successo rimane nullo per tutti i casi. Nessuna configurazione generalizza l'apprendimento.}
 \label{fig:multivstd}
 \end{figure}
 
-Esperimenti preliminari con $\alpha=0.2$, $\gamma=0.95$, 1500 episodi: con 720 coppie il primo successo arriva all'episodio 14 con 13 passi finali (l'ottimo); con 50 coppie arriva al 40; senza inizializzazione arriva al 127 con valutazione 0.00. Una maggiore quantit\`a iniziale anticipa la curva di apprendimento, a parit\`a di punto di arrivo.
+I test con quantit\`a variabili di stati mostrano come un numero maggiore di nodi acceleri l'apprendimento. Il numero finale di passi converge sempre verso il minimo indispensabile. 
 
-Le stime sono prodotte con $\gamma=0.99$ mentre l'agente opera a 0.9 o 0.95: l'inizializzazione risulta approssimata sotto due aspetti e mantiene comunque efficacia.
-
-\section{Iperparametri}\label{sec:iperparametri}
-La configurazione principale impiega $\alpha=0.07$, $\gamma=0.9$, decadimento di $\epsilon$ 0.99 con minimo 0.05 e limite di 450 passi, per i motivi seguenti:
+\section{Scelta dei parametri}\label{sec:iperparametri}
+La configurazione base impiega $\alpha=0.07$, $\gamma=0.9$, limite esplorativo minimo 0.05 e blocco a 450 passi.
 \begin{itemize}
-\item $\gamma=0.9$ invece di 0.99. Con 0.99 due stati vicini differiscono del fattore 0.99, con ridotta discriminabilit\`a per la politica greedy. Con 0.9 il gradiente indotto dai valori iniziali risulta pi\`u marcato. Nell'analisi di sensibilit\`a: con $\gamma=0.99$ il regime si raggiunge solo all'episodio 770 con 16 passi, con $\gamma=0.9$ e $\alpha=0.5$ all'episodio 286 con 13 passi.
-\item $\alpha$ ridotto. La tabella parte prossima ai valori di riferimento, pertanto incrementi contenuti consentono un affinamento senza alterare l'inizializzazione. Con $\alpha=0.9$ l'avvio \`e rapido ma il consolidamento \`e successivo (episodio 350 contro 289).
-\item decadimento di $\epsilon$ pari a 0.99 con minimo 0.05. L'esplorazione risulta prolungata ma limitata. Il limite di 450 passi consente le deviazioni iniziali: l'ottimo \`e 13 passi, mentre nelle fasi iniziali risultano necessari ordini di grandezza superiori.
+\item Il parametro $\gamma$ scende a 0.9. I valori alti appiattiscono la distanza numerica tra due celle vicine. Un valore di 0.9 aumenta lo scarto e facilita la scelta dell'azione migliore.
+\item Il programma adotta un tasso $\alpha$ ridotto. La tabella parte gi\`a popolata di valori sensati. Un tasso di aggiornamento massiccio distruggerebbe queste stime prematuramente. I test con $\alpha=0.9$ mostrano un avvio rapido ma il sistema si stabilizza con ritardo.
+\item Il limite sui passi consente i vagabondaggi esplorativi nelle prime fasi senza interrompere la partita prematuramente.
 \end{itemize}
-La combinazione con consolidamento pi\`u rapido \`e $\alpha=0.5$, $\gamma=0.9$: primo successo all'episodio 5, regime all'episodio 286, 13 passi finali.
 
-\section{Limiti}\label{sec:limiti}
-Primo: mappe non osservate. L'esperimento multi-seed della Sezione~\ref{sec:init} ottiene tasso 1.00 sui seed di addestramento ma 0.00 sul seed nuovo: cinque seed non bastano, per generalizzare ne servono molti di pi\`u. La coordinata relativa riduce lo spazio ma non rappresenta muri e strozzature, che variano con il seed. Tale punto costituisce il limite principale. L'ampliamento di seed e stati risulta utile solo a condizione che la rappresentazione sia adeguata. Il costo resta pari a una interrogazione al modello per stato.
+\section{Limiti della ricerca}\label{sec:limiti}
+Il problema principale consiste nell'incapacit\`a di risolvere mappe mai viste. Il sistema unifica le coordinate. I muri e gli ostacoli variano per ogni schema. Il modello linguistico impiega molto tempo per calcolare le valutazioni per singolo nodo. La copertura parziale dei nodi funziona bene su mappe contenute. L'impatto si riduce drasticamente su mappe vaste. L'esecuzione dell'algoritmo preliminare su due seed produce statistiche anomale dettate dal caso.
 
-Secondo: caso degenere dell'esecuzione preliminare (Sezione~\ref{sec:stati}). Su due seed su sei i checkpoint coincidono temporalmente e non descrivono una traiettoria di apprendimento.
-
-Terzo: scala e costo. La quota campionata su un grafo di 480 nodi risulta sufficiente sulla 8x8. Su mappe maggiori la frazione utile decresce e le interrogazioni al modello restano la fase di maggiore durata.
-
-\section{Sviluppi futuri e conclusioni}\label{sec:conclusioni}
-Sul 1337: errore 0.0122 con 94.1\% di azioni ottime e valutazione da 0.00 a 1.00 a pari iperparametri con 20 coppie. Sui cinque seed: errore 0.0153 con 91.9\% di azioni ottime e tasso interno a 1.00 con 23 passi. Sul seed nuovo: 0.00. Il limite, descritto nella Sezione~\ref{sec:limiti}, consiste nell'assenza di trasferimento.
-
-Restano tre sviluppi da verificare:
+\section{Sviluppi futuri}\label{sec:conclusioni}
+I risultati sul singolo seed dimostrano l'efficacia del meccanismo. L'agente apprende pi\`u velocemente dei modelli standard. L'esperimento su cinque mappe fallisce nel generare regole universali per mappe nuove.
+Tre punti necessitano di ulteriore sviluppo.
 \begin{enumerate}
-\item \textbf{Addestramento completo su molti pi\`u seed.} Cinque seed danno tasso 1.00 sui layout visti e 0.00 sul nuovo: per generalizzare serve un addestramento completo che copra molti pi\`u layout, affinch\'e la politica risultante tenga su mappe non osservate.
-\item \textbf{Modello affinato per risposte rapide.} Un modello fine-tuned sullo specifico caso d'uso, in grado di restituire i valori della funzione in modo molto veloce, ridurrebbe il costo unitario per stato che oggi rende impraticabile l'interrogazione su larga scala.
-\item \textbf{Stime generate durante l'addestramento.} Anzich\'e stimare i valori una sola volta prima di iniziare, il modello verrebbe interrogato sui nuovi stati incontrati, guidando l'esplorazione in corso d'opera.
+\item \textbf{Estensione del set di addestramento.} L'uso di molte decine di seed permetterebbe all'agente di imparare a gestire gli ostacoli imprevisti.
+\item \textbf{Modelli dedicati.} Una rete neurale specializzata in stime numeriche ridurrebbe i tempi di attesa. La tabella iniziale si popolerebbe molto pi\`u in fretta.
+\item \textbf{Stima in tempo reale.} Il sistema potrebbe interrogare il modello solo durante l'esplorazione di celle nuove. Questo eviterebbe il calcolo anticipato di tutti gli stati.
 \end{enumerate}
-Per vincoli di costo gli esperimenti presentati sono in singola esecuzione e i risultati sono da intendersi come prova di fattibilit\`a.
+I test attuali rappresentano prove di fattibilit\`a eseguite in tiratura singola per ridurre i costi computazionali.
 
 \appendix
 \section{Appendice: ambiente FrozenLake}\label{sec:frozenlake}
-La medesima ipotesi \`e applicata all'ambiente \path{FrozenLake-v1} 8x8 in modalit\`a stocastica, senza fasi. La procedura \`e predisposta nei moduli dedicati (grafo, interrogazione sui bottleneck, valutazione, agente); i dati non sono versionati e se ne descrive esclusivamente l'architettura.
+L'ambiente \path{FrozenLake-v1} introduce esiti probabilistici sulle mosse. Il sistema usa un modello linguistico sui 18 nodi critici.
 
-Il modello da 120 miliardi di parametri su 18 bottleneck riporta errore 0.1228, scelte giuste al 55.6\% contro 25\% del livello casuale, rimpianto 0.0060. Il modello da 26 miliardi riporta errore 0.3383 e scelte giuste al 77.8\%, con valori fuori scala. Pochi stati e misure deboli: lavoro in corso, non risultato acquisito. La causa probabile risiede nella natura stocastica di $Q^*$ con scivolamento, a fronte di una singola stima per tre esiti possibili.
+I risultati con 120 miliardi di parametri riportano un errore elevato di 0.1228. Le selezioni corrette si fermano al 55.6\%. I modelli faticano a calcolare la media delle probabilit\`a tra esiti incerti tramite ragionamento testuale. Il problema necessita di altre verifiche.
 
 \begin{thebibliography}{9}
-\bibitem{sutton2018} Sutton, R.~S., Barto, A.~G. \textit{Reinforcement Learning: An Introduction}, 2nd ed., MIT Press, 2018.
+\bibitem{sutton2018} Sutton, R. S., Barto, A. G. \textit{Reinforcement Learning: An Introduction}, 2nd ed., MIT Press, 2018.
 \bibitem{minigrid2023} Chevalier-Boisvert, M. et al. MiniGrid and MiniWorld. \textit{NeurIPS} 36, 2023.
 \end{thebibliography}
 

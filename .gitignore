@@ -6,8 +6,7 @@ __pycache__/
 **/wandb/
 **/videos/
 
-# generated outputs (rigenerabili, fuori da git; vedi src/paths.py)
-src/output/
+
 
 # latex build
 *.aux

@@ -1,0 +1,52 @@
+======================================================================
+VALUTAZIONE LLM FrozenLake slippery (Q* stocastico) — v3
+corrispettivo di evaluate_llm.py per FrozenLake | 4 azioni | filtro per stato | argmax tie-aware | regret | Δk
+Generato 2026-09-23 12:00:50
+Sorgente graph/data files=2
+======================================================================
+
+----------------------------------------------------------------------
+FILE: graph/data/frozenlake_llm_8x8_slippery_q_seed1337_gemma-4-26b-a4b-it.json (mtime 2026-09-19 12:57:01, righe file 72)
+Gamma: 0.99 (cli) — on-grid v_true=79.2%, v_llm=51.4%
+Stati: totali=18  falliti (v_llm=0 su tutte le azioni)=0 (0.0%)  validi=18
+Righe: stime valide=72  v_llm=0/nan in stati validi=0
+Δk (n=27): Δk=0 0.0%  |Δk|=1 0.0%  |Δk|≥2 100.0%  E|Δk|=82.222  bias Δk=+33.259
+VALORI: MAE=0.3383 [0.3063, 0.3728] RMSE=0.3701 [0.3427, 0.3954] bias=+0.1343 max_err=0.5818
+Entro soglia: ≤0.05=4.2%  ≤0.10=11.1%
+Pearson r=-0.161 [-0.392, 0.041]  Spearman ρ=-0.125  CCC=-0.095 [-0.221, 0.027]
+OLS: slope=-0.407  intercept=+0.8008  R²=0.026  (slope CCC=-0.407, solo per confronto)
+AZIONI (n=18 stati): Top-1 tie-aware=77.8% [55.6%, 94.4%]  Top-1 strict=66.7%  Top-1 strict-unique=66.7% (n=18)  Top-2=88.9%  Top-3=94.4%  (random 25.0% su 4 azioni)
+  regret medio (prima riga del top LLM)=0.0231 [0.0008, 0.0561]  regret (tie favorevole)=0.0151  top LLM con pareggi=0.3%
+  confusion: somma celle=18 (stati a ottimo unico) = 18 valutati − 0 con pareggi esclusi
+Valori per bucket:
+  bottleneck   n=  72 MAE=0.3383 RMSE=0.3701 bias=+0.1343
+Selezione azione per bucket:
+  bottleneck   acc(tie-aware)= 77.8%
+Valori per action:
+  down       MAE=0.3546 RMSE=0.3860
+  right      MAE=0.3344 RMSE=0.3688
+  up         MAE=0.3338 RMSE=0.3606
+  left       MAE=0.3304 RMSE=0.3644
+
+----------------------------------------------------------------------
+FILE: graph/data/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b.json (mtime 2026-09-19 12:34:13, righe file 72)
+Gamma: 0.99 (cli) — on-grid v_true=80.6%, v_llm=63.9%
+Stati: totali=18  falliti (v_llm=0 su tutte le azioni)=0 (0.0%)  validi=18
+Righe: stime valide=72  v_llm=0/nan in stati validi=0
+Δk (n=38): Δk=0 5.3%  |Δk|=1 0.0%  |Δk|≥2 94.7%  E|Δk|=22.158  bias Δk=-4.632
+VALORI: MAE=0.1228 [0.1006, 0.1471] RMSE=0.1602 [0.1306, 0.1879] bias=+0.0923 max_err=0.4113
+Entro soglia: ≤0.05=23.6%  ≤0.10=50.0%
+Pearson r=0.736 [0.602, 0.829]  Spearman ρ=0.751  CCC=0.547 [0.399, 0.676]
+OLS: slope=1.254  intercept=-0.0239  R²=0.542  (slope CCC=1.254, solo per confronto)
+AZIONI (n=18 stati): Top-1 tie-aware=55.6% [33.3%, 77.8%]  Top-1 strict=50.0%  Top-1 strict-unique=50.0% (n=18)  Top-2=72.2%  Top-3=83.3%  (random 25.0% su 4 azioni)
+  regret medio (prima riga del top LLM)=0.0060 [0.0017, 0.0123]  regret (tie favorevole)=0.0023  top LLM con pareggi=0.2%
+  confusion: somma celle=18 (stati a ottimo unico) = 18 valutati − 0 con pareggi esclusi
+Valori per bucket:
+  bottleneck   n=  72 MAE=0.1228 RMSE=0.1602 bias=+0.0923
+Selezione azione per bucket:
+  bottleneck   acc(tie-aware)= 55.6%
+Valori per action:
+  up         MAE=0.1384 RMSE=0.1771
+  right      MAE=0.1273 RMSE=0.1588
+  down       MAE=0.1138 RMSE=0.1552
+  left       MAE=0.1116 RMSE=0.1484

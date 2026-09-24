@@ -1,0 +1,1314 @@
+{
+  "seed": 1337,
+  "map_name": "4x4",
+  "is_slippery": true,
+  "gamma": 0.99,
+  "nrow": 4,
+  "ncol": 4,
+  "nS": 16,
+  "nA": 4,
+  "start_pos": [
+    0,
+    0
+  ],
+  "goal_pos": [
+    3,
+    3
+  ],
+  "holes": [
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      3
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      0
+    ]
+  ],
+  "desc": [
+    "SFFF",
+    "FHFH",
+    "FFFH",
+    "HFFG"
+  ],
+  "nodes": [
+    {
+      "id": 0,
+      "state": 0,
+      "r": 0,
+      "c": 0,
+      "ch": "S",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| A  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.542026,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 4,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 4,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 1,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 4,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 1,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 1,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "state": 1,
+      "r": 0,
+      "c": 1,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | A  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.498803,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 1,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 1,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 1,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "state": 2,
+      "r": 0,
+      "c": 2,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | F  | A  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.470696,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 1,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 6,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 1,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 6,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 3,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 6,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 3,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 3,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 1,
+            "reward": 0.0,
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "state": 3,
+      "r": 0,
+      "c": 3,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | F  | F  | A  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.456852,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 3,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 3,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 3,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 3,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 3,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 3,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "state": 4,
+      "r": 1,
+      "c": 0,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| A  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.558451,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 4,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 8,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 4,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 8,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 8,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 0,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 4,
+            "reward": 0.0,
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "state": 5,
+      "r": 1,
+      "c": 1,
+      "ch": "H",
+      "is_hole": true,
+      "is_goal": false,
+      "is_terminal": true,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | A  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.0,
+      "transitions": {
+        "0": [
+          {
+            "prob": 1.0,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "1": [
+          {
+            "prob": 1.0,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "2": [
+          {
+            "prob": 1.0,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "3": [
+          {
+            "prob": 1.0,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "state": 6,
+      "r": 1,
+      "c": 2,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | A  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.358348,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 10,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 10,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 10,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 2,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "state": 7,
+      "r": 1,
+      "c": 3,
+      "ch": "H",
+      "is_hole": true,
+      "is_goal": false,
+      "is_terminal": true,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | A  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.0,
+      "transitions": {
+        "0": [
+          {
+            "prob": 1.0,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "1": [
+          {
+            "prob": 1.0,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "2": [
+          {
+            "prob": 1.0,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "3": [
+          {
+            "prob": 1.0,
+            "next_id": 7,
+            "reward": 0.0,
+            "done": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "state": 8,
+      "r": 2,
+      "c": 0,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| A  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.591799,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 4,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 8,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 8,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 9,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 9,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 4,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 9,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 4,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 8,
+            "reward": 0.0,
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "state": 9,
+      "r": 2,
+      "c": 1,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | A  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.64308,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 8,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 13,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 8,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 13,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 10,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 13,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 10,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 10,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 5,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 8,
+            "reward": 0.0,
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "state": 10,
+      "r": 2,
+      "c": 2,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | A  | H  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.615208,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 6,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 9,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 14,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 9,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 14,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 11,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 14,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 11,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 6,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 11,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 6,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 9,
+            "reward": 0.0,
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "state": 11,
+      "r": 2,
+      "c": 3,
+      "ch": "H",
+      "is_hole": true,
+      "is_goal": false,
+      "is_terminal": true,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | A  |\n+----+----+----+----+\n| H  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.0,
+      "transitions": {
+        "0": [
+          {
+            "prob": 1.0,
+            "next_id": 11,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "1": [
+          {
+            "prob": 1.0,
+            "next_id": 11,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "2": [
+          {
+            "prob": 1.0,
+            "next_id": 11,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "3": [
+          {
+            "prob": 1.0,
+            "next_id": 11,
+            "reward": 0.0,
+            "done": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "state": 12,
+      "r": 3,
+      "c": 0,
+      "ch": "H",
+      "is_hole": true,
+      "is_goal": false,
+      "is_terminal": true,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| A  | F  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.0,
+      "transitions": {
+        "0": [
+          {
+            "prob": 1.0,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "1": [
+          {
+            "prob": 1.0,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "2": [
+          {
+            "prob": 1.0,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "3": [
+          {
+            "prob": 1.0,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 13,
+      "state": 13,
+      "r": 3,
+      "c": 1,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | A  | F  | G  |\n+----+----+----+----+",
+      "v_value": 0.74172,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 9,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 13,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 13,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 14,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 13,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 14,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 9,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 14,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 9,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 12,
+            "reward": 0.0,
+            "done": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 14,
+      "state": 14,
+      "r": 3,
+      "c": 2,
+      "ch": "F",
+      "is_hole": false,
+      "is_goal": false,
+      "is_terminal": false,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | A  | G  |\n+----+----+----+----+",
+      "v_value": 0.862837,
+      "transitions": {
+        "0": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 10,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 13,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 14,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "1": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 13,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 14,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 15,
+            "reward": 1.0,
+            "done": true
+          }
+        ],
+        "2": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 14,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 15,
+            "reward": 1.0,
+            "done": true
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 10,
+            "reward": 0.0,
+            "done": false
+          }
+        ],
+        "3": [
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 15,
+            "reward": 1.0,
+            "done": true
+          },
+          {
+            "prob": 0.3333333333333333,
+            "next_id": 10,
+            "reward": 0.0,
+            "done": false
+          },
+          {
+            "prob": 0.33333333333333337,
+            "next_id": 13,
+            "reward": 0.0,
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 15,
+      "state": 15,
+      "r": 3,
+      "c": 3,
+      "ch": "G",
+      "is_hole": false,
+      "is_goal": true,
+      "is_terminal": true,
+      "map": "+----+----+----+----+\n| S  | F  | F  | F  |\n+----+----+----+----+\n| F  | H  | F  | H  |\n+----+----+----+----+\n| F  | F  | F  | H  |\n+----+----+----+----+\n| H  | F  | F  | A  |\n+----+----+----+----+",
+      "v_value": 0.0,
+      "transitions": {
+        "0": [
+          {
+            "prob": 1.0,
+            "next_id": 15,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "1": [
+          {
+            "prob": 1.0,
+            "next_id": 15,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "2": [
+          {
+            "prob": 1.0,
+            "next_id": 15,
+            "reward": 0.0,
+            "done": true
+          }
+        ],
+        "3": [
+          {
+            "prob": 1.0,
+            "next_id": 15,
+            "reward": 0.0,
+            "done": true
+          }
+        ]
+      }
+    }
+  ],
+  "action_names": {
+    "0": "left",
+    "1": "down",
+    "2": "right",
+    "3": "up"
+  }
+}

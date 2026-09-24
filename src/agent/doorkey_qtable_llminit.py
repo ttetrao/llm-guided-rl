@@ -47,7 +47,7 @@ STD = {"alpha": 0.25, "gamma": 0.99, "eps_decay": 0.998, "eps_min": 0.05}
 PAIRS = (("LLM-init", "Vanilla-std", "_vs_std"),
          ("LLM-init", "Vanilla (same hp)", "_vs_samehp"))
 # stage_idx relativo -> (has_key, door_open) assoluti
-STAGE_ABS = {0: (False, False), 1: (True, False), 2: (True, True)}
+STAGE_ABS = {0: (False, False), 1: (True, False), 2: (True, True), 3: (True, True)}
 
 
 def _unwrap_rows(input_path):
@@ -85,8 +85,20 @@ def load_qinit(input_path, max_init=None):
     n_clipped = 0
     per_seed_counts = {s: 0 for s in seeds}
     for r in rows:
-        t = targets_per_seed[r["seed"]][STAGE_TARGET[r["stage"]]]
-        key = ((t[0] - r["x"], t[1] - r["y"], r["dir"], STAGE_IDX[r["stage"]]),
+        targets = targets_per_seed[r["seed"]]
+        stage_str = r["stage"]
+        if stage_str == "reach_goal":
+            if r["x"] <= targets["door_pos"][0]:
+                t = targets["door_pos"]
+                stg = 2
+            else:
+                t = targets["goal_pos"]
+                stg = 3
+        else:
+            t = targets[STAGE_TARGET[stage_str]]
+            stg = STAGE_IDX[stage_str]
+            
+        key = ((t[0] - r["x"], t[1] - r["y"], r["dir"], stg),
                ACTION_IDX[r["action"]])
         v = float(r["v_llm"])
         assert v == v and abs(v) != float("inf"), f"non-finite v_llm: {v}"
@@ -163,8 +175,12 @@ def optimal_policy_metrics(qtable, mdp, tie_eps=TIE_EPS):
     """
     gamma = float(mdp.get("gamma", 0.99))
     gi = mdp["grid_info"]
-    targets = [tuple(gi["key_pos"]), tuple(gi["door_pos"]),
-               tuple(gi["goal_pos"])]
+    targets = {
+        0: tuple(gi["key_pos"]),
+        1: tuple(gi["door_pos"]),
+        2: tuple(gi["door_pos"]),
+        3: tuple(gi["goal_pos"])
+    }
     index = mdp["index"]
     nodes = {int(n["id"]): n for n in mdp["nodes"]}
     agree, losses, worst = 0, [], []
@@ -700,10 +716,10 @@ def main():
                  "transitions": {}},
             ],
         }
-        m = optimal_policy_metrics({(0, 1, 0, 2): [0.0] * 2 + [1.0] + [0.0] * 4},
+        m = optimal_policy_metrics({(0, 1, 0, 3): [0.0] * 2 + [1.0] + [0.0] * 4},
                                    mdp_toy)
         assert m["agreement"] == 1.0 and abs(m["mean_value_loss"]) < 1e-9, m
-        m2 = optimal_policy_metrics({(0, 1, 0, 2): [0.0] * 7}, mdp_toy)
+        m2 = optimal_policy_metrics({(0, 1, 0, 3): [0.0] * 7}, mdp_toy)
         assert m2["agreement"] == 0.0 and m2["mean_value_loss"] > 0.0, m2
         assert set(STD) == {"alpha", "gamma", "eps_decay", "eps_min"}
         assert std_hp(SimpleNamespace(std_alpha=0.1, std_gamma=0.9,

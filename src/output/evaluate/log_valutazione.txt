@@ -1,0 +1,35 @@
+======================================================================
+VALUTAZIONE LLM (v_true vs v_llm) Q via V — v3
+filtro per stato | argmax tie-aware | regret primario | Δk = k_llm − k_true
+Generato 2026-09-23 17:30:51
+Sorgente src/graph/data/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b.json files=1
+======================================================================
+
+----------------------------------------------------------------------
+FILE: src/graph/data/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b.json (mtime 2026-09-23 17:18:41, righe file 930)
+Gamma: 0.99 (cli) — on-grid v_true=100.0%, v_llm=99.8%
+Stati: totali=155  falliti (v_llm=0 su tutte le azioni)=44 (28.4%)  validi=111
+Righe: stime valide=629  v_llm=0/nan in stati validi=37
+Δk (n=628): Δk=0 30.6%  |Δk|=1 45.7%  |Δk|≥2 23.7%  E|Δk|=1.831  bias Δk=+1.430
+VALORI: MAE=0.0153 [0.0087, 0.0228] RMSE=0.0519 [0.0324, 0.0703] bias=-0.0116 max_err=0.5373
+Entro soglia: ≤0.05=96.8%  ≤0.10=98.1%
+Pearson r=0.707 [0.515, 0.986]  Spearman ρ=0.912  CCC=0.657 [0.385, 0.974]
+OLS: slope=0.991  intercept=-0.0032  R²=0.500  (slope CCC=0.991, solo per confronto)
+AZIONI (n=111 stati): Top-1 tie-aware=91.9% [87.0%, 97.1%]  Top-1 strict=82.0%  Top-1 strict-unique=85.4% (n=96)  Top-2=96.4%  Top-3=97.3%  (random 16.7% su 6 azioni)
+  regret medio (prima riga del top LLM)=0.0020 [0.0014, 0.0025]  regret (tie favorevole)=0.0011  top LLM con pareggi=0.2%
+  confusion: somma celle=96 (stati a ottimo unico) = 111 valutati − 15 con pareggi esclusi
+Valori per bucket:
+  bottleneck   n= 629 MAE=0.0153 RMSE=0.0519 bias=-0.0116
+Selezione azione per bucket:
+  bottleneck   acc(tie-aware)= 91.9%
+Valori per action:
+  right      MAE=0.0160 RMSE=0.0470
+  drop       MAE=0.0160 RMSE=0.0567
+  toggle     MAE=0.0158 RMSE=0.0566
+  left       MAE=0.0158 RMSE=0.0537
+  forward    MAE=0.0142 RMSE=0.0545
+  pickup     MAE=0.0142 RMSE=0.0410
+Valori per stage:
+  find_key       MAE=0.0235 RMSE=0.0772
+  reach_goal     MAE=0.0094 RMSE=0.0116
+  open_door      MAE=0.0085 RMSE=0.0132

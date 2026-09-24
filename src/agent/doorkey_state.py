@@ -53,15 +53,22 @@ def resolve_input(name_or_path):
 
 def encode(env):
     stage = env.get_wrapper_attr("curr_stage")
-    stage_idx = STAGE_BY_ENUM.get(stage, 2)
-    if stage == Stage.FIND_KEY:
-        t = env.get_wrapper_attr("key_pos")
-    elif stage == Stage.OPEN_DOOR:
-        t = env.get_wrapper_attr("door_pos")
-    else:
-        t = env.get_wrapper_attr("goal_pos")
     base = env.unwrapped
     ax, ay = base.agent_pos
+    if stage == Stage.FIND_KEY:
+        t = env.get_wrapper_attr("key_pos")
+        stage_idx = 0
+    elif stage == Stage.OPEN_DOOR:
+        t = env.get_wrapper_attr("door_pos")
+        stage_idx = 1
+    else:
+        door_pos = env.get_wrapper_attr("door_pos")
+        if ax <= door_pos[0]:
+            t = door_pos
+            stage_idx = 2
+        else:
+            t = env.get_wrapper_attr("goal_pos")
+            stage_idx = 3
     return (int(t[0] - ax), int(t[1] - ay), int(base.agent_dir), int(stage_idx))
 
 
