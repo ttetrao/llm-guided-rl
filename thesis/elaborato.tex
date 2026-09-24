@@ -8,7 +8,7 @@
 \usepackage{graphicx}
 \usepackage{xurl}
 \usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue,linktoc=all,bookmarksnumbered=true,pdfstartview={FitH},pdftitle={Utilizzo di modelli linguistici per migliorare il processo di apprendimento per rinforzo},pdfauthor={Pietro Fazion}}
+\hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue,linktoc=all,bookmarksnumbered=true,pdfstartview={FitH},pdftitle={Inizializzazione Q-learning con modelli linguistici},pdfauthor={Pietro Fazion}}
 \setcounter{tocdepth}{2}
 \setcounter{secnumdepth}{2}
 \setlength{\parskip}{0.6em}
@@ -25,7 +25,7 @@
 \begin{abstract}
 L'ambiente MiniGrid-DoorKey assegna la ricompensa solo quando l'agente raggiunge l'obiettivo finale. Il Q-learning classico impiega molti episodi per registrare il primo successo. Questo documento valuta una singola ipotesi. L'ipotesi prevede l'uso di un modello linguistico per stimare il valore ottimo su un gruppo ridotto di stati. Il sistema inserisce questi valori nella tabella Q prima di iniziare l'addestramento.
 
-L'esperimento sul seed 1337 utilizza 20 coppie stato-azione relative ai passaggi critici. Questa configurazione raggiunge un tasso di successo del 100\% con 17 passi medi. La configurazione di controllo senza stime iniziali registra un tasso dello 0\%. Il modello linguistico da 120 miliardi di parametri presenta un errore medio di 0.0122. Il modello indica l'azione corretta nel 94.1\% dei casi. Il trasferimento dell'apprendimento su mappe nuove non produce risultati. Il testo cita i file di log per la verifica dei dati.
+L'esperimento su un livello specifico elabora 20 coppie stato-azione relative ai passaggi decisivi. Questa configurazione raggiunge un tasso di successo del 100\% con 17 passi medi. La configurazione di controllo senza stime iniziali registra un tasso dello 0\%. Il modello gpt-oss-120b presenta un errore medio di 0.0122. Il modello indica l'azione corretta nel 94.1\% dei casi. Il trasferimento dell'apprendimento su mappe nuove non produce risultati. Il testo cita i file di log per la verifica dei dati.
 \end{abstract}
 \tableofcontents
 \newpage
@@ -35,17 +35,17 @@ L'algoritmo Q-learning propaga il valore dall'obiettivo agli stati precedenti \c
 
 La ricompensa arriva raramente nelle fasi iniziali. La tabella mantiene valori nulli per molto tempo. L'agente non riceve indicazioni per prendere decisioni.
 
-L'esperimento stima il valore $V_{opt}$ con un modello linguistico su pochi stati. Il codice inserisce i valori nella tabella Q iniziale. L'addestramento prosegue con il Q-learning classico. Il processo non usa ricompense aggiuntive. L'obiettivo temporale resta invariato.
+L'esperimento stima il valore $V_{opt}$ con un modello linguistico su pochi stati. Il codice inserisce i valori nella tabella Q iniziale. L'addestramento prosegue con il Q-learning classico. Il processo non genera ricompense aggiuntive. L'obiettivo temporale resta invariato.
 
-I valori iniziali guidano l'agente nei punti decisivi. Questo compensa la mancanza di ricompense immediate.
+I valori iniziali guidano l'agente nei punti decisivi. Questa operazione compensa la mancanza di ricompense immediate.
 
-L'esperimento principale valuta il seed 1337. L'addestramento dura 2000 episodi. Il tasso di apprendimento $\alpha$ vale 0.07. Il fattore di sconto $\gamma$ vale 0.9. La configurazione usa 20 coppie stato-azione generate dal modello. Questa configurazione completa la mappa nel 100\% dei casi con 17 passi di media. La configurazione senza stime iniziali fallisce in ogni tentativo e consuma 450 passi.
+L'esperimento principale valuta un singolo livello. L'addestramento dura 2000 episodi. Il tasso di apprendimento $\alpha$ vale 0.07. Il fattore di sconto $\gamma$ vale 0.9. La configurazione adotta 20 coppie stato-azione generate dal modello. Questa configurazione completa la mappa nel 100\% dei casi con 17 passi di media. La configurazione senza stime iniziali fallisce in ogni tentativo e consuma 450 passi.
 I dati risiedono nella cartella \path{src/output/agents/}.
-I file sono \path{qtable_llminit_seed_1337_gpt-oss_120b_llminit.json} e \path{qtable_llminit_seed_1337_gpt-oss_120b_vsame.json}.
+I file di salvataggio memorizzano i valori in formato JSON.
 La Sezione \ref{sec:init} discute i risultati.
 
 \section{Struttura della repository}\label{sec:repo}
-Il codice sorgente e i dati risiedono nella repository ufficiale del progetto. L'indirizzo web \`e \url{https://github.com/ttetrao/llm-guided-rl/tree/main}. La cartella \path{src/} contiene i moduli operativi. I programmi si avviano da questa posizione. Il comando \`e \path{python3 -m graph.nome_modulo}. Lo schema si applica a tutti i pacchetti. 
+Il codice sorgente e i dati risiedono nella repository ufficiale del progetto. L'indirizzo web \`e \url{https://github.com/ttetrao/llm-guided-rl/tree/main}. La cartella \path{src/} contiene i moduli operativi. I programmi si avviano da questa posizione. Il comando \`e \path{python3 -m src.graph.nome_modulo}. Lo schema si applica a tutti i pacchetti. 
 Il pacchetto \path{src/graph/} costruisce il grafo del processo decisionale e seleziona gli stati.
 Il pacchetto \path{src/llm/} interroga i modelli linguistici.
 Il pacchetto \path{src/evaluate/} genera le metriche e i grafici.
@@ -56,19 +56,19 @@ Il pacchetto \path{src/docs/} raccoglie le istruzioni testuali per i modelli.
 Il modulo \path{src/paths.py} gestisce le destinazioni di salvataggio. I dati finiscono sotto \path{src/output/}. La cartella \path{cache} conserva i grafi. La cartella \path{llm} ospita le risposte dei modelli. La cartella \path{agents} raccoglie i dati degli addestramenti. Le cartelle \path{evaluate} contengono i grafici di riepilogo. Il file \path{src/agent/doorkey_qtable_llminit.py} produce i confronti diretti. I documenti di tesi risiedono in \path{thesis/}.
 
 \section{L'ambiente e il valore ottimo}\label{sec:ambiente}
-Il progetto utilizza l'ambiente \path{MiniGrid-DoorKey-8x8-v0} \cite{minigrid2023}. Le regole sono originali. L'agente raccoglie la chiave. L'agente apre la porta con l'azione \path{toggle}. L'agente raggiunge l'obiettivo in coordinate (6,6). La ricompensa vale 1 solo sul bersaglio. La ricompensa vale 0 in ogni altra cella. Il limite massimo di passi \`e 450.
+Il progetto adotta l'ambiente \path{MiniGrid-DoorKey-8x8-v0} \cite{minigrid2023}. Le regole sono originali. L'agente raccoglie la chiave. L'agente apre la porta con l'azione \path{toggle}. L'agente raggiunge l'obiettivo fisso sulla mappa. La ricompensa vale 1 solo sul bersaglio. La ricompensa vale 0 in ogni altra cella. Il limite massimo di passi \`e 450.
 
-Lo stato interno del grafo richiede cinque variabili. Le variabili sono la posizione, la direzione dell'agente, il possesso della chiave e lo stato della porta. La posizione dei muri dipende dal seed. Queste cinque variabili descrivono la mappa in modo univoco per ogni seed.
+Lo stato interno del grafo richiede cinque variabili. Le variabili sono la posizione, la direzione dell'agente, il possesso della chiave e lo stato della porta. La posizione dei muri varia per ogni livello. Queste cinque variabili descrivono la mappa in modo univoco per ogni configurazione.
 
-Lo script \path{src/graph/mdp_graph.py} genera il grafo. Il calcolo considera sette azioni per ogni stato. Il processo determina la cella di arrivo e la ricompensa. Il grafo contiene 480 nodi per ogni seed. Il bersaglio si trova sempre in (6,6). Il calcolo utilizza il metodo della value iteration e un fattore di sconto 0.99 per determinare il valore ottimo $V_{opt}$. Questo calcolo fornisce il parametro di valutazione per il modello linguistico. Il processo esclude gli stati finali dalle interrogazioni. Il sistema ignora l'azione nulla.
+Lo script \path{src/graph/mdp_graph.py} genera il grafo. Il calcolo considera sette azioni per ogni stato. Il processo determina la cella di arrivo e la ricompensa. Il grafo contiene 480 nodi per ogni layout. Il bersaglio si trova sempre nella stessa cella. Il calcolo applica il metodo della value iteration e un fattore di sconto 0.99 per determinare il valore ottimo $V_{opt}$. Questa operazione fornisce il parametro di valutazione per il modello linguistico. Il processo esclude gli stati finali dalle interrogazioni. Il sistema ignora l'azione nulla.
 
 Lo script \path{src/env/view_wrapper.py} traccia il progresso dell'agente. Lo stato \path{find_key} indica la ricerca della chiave. Lo stato \path{open_door} indica il possesso della chiave e la porta chiusa. Lo stato \path{reach_goal} indica il via libera verso l'obiettivo. L'agente deve rispettare questa sequenza. Due posizioni uguali con stati di avanzamento diversi richiedono azioni diverse.
 
 \section{Selezione degli stati}\label{sec:stati}
 L'interrogazione completa dei 480 nodi richiede molto tempo. Molte celle di passaggio condividono lo stesso valore. Un parametro definisce il numero massimo di interrogazioni. Il file \path{src/graph/doorkey_states.py} seleziona gli stati utili.
 
-\subsection{Tipologie di nodi critici}\label{subsec:bottleneck}
-La funzione \path{extract_bottleneck} isola i nodi critici dal grafo. Il processo non richiede l'esecuzione di partite. I nodi si dividono in sei categorie.
+\subsection{Tipologie di nodi decisivi}\label{subsec:bottleneck}
+La funzione \path{extract_bottleneck} dal file \path{src/graph/doorkey_states.py} isola i nodi decisivi dal grafo. Il processo non richiede l'esecuzione di partite. I nodi si dividono in sei categorie.
 \begin{enumerate}
 \item \path{on_key}: la cella contiene la chiave. Questa categoria produce 8 nodi.
 \item \path{on_door}: la cella contiene la porta aperta. Questa categoria produce 8 nodi.
@@ -77,63 +77,63 @@ La funzione \path{extract_bottleneck} isola i nodi critici dal grafo. Il process
 \item \path{key_take}: l'azione di raccolta acquisisce la chiave. La categoria conta da 2 a 8 nodi in base alla posizione dei muri.
 \item \path{goal_entry}: un passo separa l'agente dall'obiettivo. La categoria fornisce da 4 a 8 nodi.
 \end{enumerate}
-Queste categorie mappano posizioni, condizioni di azione e stati finali. I nodi totali variano tra 30 e 34. Questo valore rappresenta meno del 10\% dell'intero grafo.
+Queste categorie mappano posizioni, condizioni di azione e stati finali. I nodi totali variano tra 30 e 34. Questo numero rappresenta meno del 10\% dell'intero grafo.
 
 \subsection{Campionamento della progressione}\label{subsec:checkpoint}
-I nodi critici marcano i passaggi obbligati. I nodi di progressione fotografano l'evoluzione dell'agente nel tempo. L'agente visita molte celle inutili all'inizio. L'agente si concentra sul percorso ottimale alla fine. La funzione \path{run_pilot} addestra un agente senza aiuti esterni. I parametri sono $\alpha=0.3$ e $\gamma=0.99$. L'esplorazione decade lentamente.
+I nodi decisivi marcano i passaggi obbligati. I nodi di progressione fotografano l'evoluzione dell'agente nel tempo. L'agente visita molte celle inutili all'inizio. L'agente si concentra sul percorso ottimale alla fine. La funzione \path{run_pilot} dal file \path{src/graph/doorkey_states.py} addestra un agente senza aiuti esterni. I parametri sono $\alpha=0.3$ e $\gamma=0.99$. L'esplorazione decade lentamente.
 
-Il programma salva gli stati visitati quando il successo medio tocca soglie specifiche. Le soglie sono 0.3, 0.5, 0.7, 0.8 e 1.0. I salvataggi per i valori bassi includono tutti i percorsi tentati. I salvataggi per i valori alti aggiungono deviazioni casuali. Questo accorgimento impedisce di registrare solo la sequenza perfetta. Il seed 1337 attiva le soglie agli episodi 93, 115, 137, 150 e 175. Ogni attivazione salva circa 300 nodi.
+Il programma salva gli stati visitati quando il successo medio tocca soglie specifiche. Le soglie sono 0.3, 0.5, 0.7, 0.8 e 1.0. I salvataggi per i valori bassi includono tutti i percorsi tentati. I salvataggi per i valori alti aggiungono deviazioni casuali. Questo accorgimento impedisce di registrare solo la sequenza perfetta. Il livello di test attiva le soglie agli episodi 93, 115, 137, 150 e 175. Ogni attivazione salva circa 300 nodi.
 
-I seed 47952 e 74839 completano il gioco al primo tentativo per puro caso. Tutte le soglie si attivano simultaneamente. Le liste contengono pochissimi nodi. Il codice riporta questi eventi per tracciamento.
+Alcuni scenari isolati completano il gioco al primo tentativo per puro caso. Tutte le soglie si attivano simultaneamente. Le liste contengono pochissimi nodi. Il codice riporta questi eventi per tracciamento.
 
-La funzione \path{allocate} riserva il primo spazio per i nodi critici. Il programma divide il resto della capienza tra i nodi di progressione usando il metodo dei resti maggiori.
+La funzione \path{allocate} dal file \path{src/graph/doorkey_states.py} riserva il primo spazio per i nodi decisivi. Il programma divide il resto della capienza tra i nodi di progressione calcolando i resti maggiori.
 
 \section{Interrogazione del modello}\label{sec:prompt}
 Il programma calcola il valore per l'azione $Q$ a partire dal valore dello stato $V$. Il testo di istruzione risiede in \path{src/docs/doorkey/it/prompt.txt}. I file \path{src/llm/query_gpt.py} e \path{src/llm/query_gemma.py} gestiscono le chiamate.
 
-Il modello riceve le regole del gioco e la legenda della mappa. Il testo include le definizioni per il calcolo del valore. Il programma invia la mappa corrente e le sei mappe relative alle possibili mosse. Il modello linguistico valuta solo la distanza dall'obiettivo per ogni opzione. L'espressione usata \`e $\gamma^d$ con $\gamma=0.99$. Il calcolo sfrutta il determinismo del gioco. Il valore esatto di uno stato distante $d$ mosse corrisponde a $\gamma^d$. Il modello non pu\`o adottare stime casuali. Il modello risponde nel formato JSON. Ogni risposta include l'applicazione della regola, il conteggio dei passi e il calcolo numerico. Il programma scarta le risposte anomale o errate.
+Il modello riceve le regole del gioco e la legenda della mappa. Il testo include le definizioni per il calcolo del valore. Il programma invia la mappa corrente e le sei mappe relative alle possibili mosse. Il modello linguistico valuta solo la distanza dall'obiettivo per ogni opzione. L'espressione valutata \`e $\gamma^d$ con $\gamma=0.99$. Il calcolo sfrutta il determinismo del gioco. Il valore esatto di uno stato distante $d$ mosse corrisponde a $\gamma^d$. Il modello non adopera stime casuali. Il modello risponde nel formato JSON. Ogni risposta include l'applicazione della regola, il conteggio dei passi e il calcolo numerico. Il programma scarta le risposte anomale o errate.
 
-Il test principale impiega un modello da 120 miliardi di parametri sul seed 1337. I file occupano la cartella \path{src/output/llm/}. Il file \path{llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b.json} contiene 500 righe di calcolo. Le risposte valide sono 85 su 99 richieste. Il codice attende 65 secondi tra una chiamata e l'altra. Il sistema ritenta 3 volte in caso di errore. 
+Il test principale impiega il modello gpt-oss-120b su un livello di base. I file occupano la cartella \path{src/output/llm/}. Il file di output relativo contiene 500 righe di calcolo. Le risposte valide sono 85 su 99 richieste. Il codice attende 65 secondi tra una chiamata e l'altra. Il sistema ritenta 3 volte in caso di errore. 
 
-Un secondo test analizza cinque seed differenti. Il file \path{llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b.json} raccoglie 111 stati validi e 629 righe.
+Un secondo test analizza cinque livelli differenti. Il file di output relativo raccoglie 111 stati validi e 629 righe.
 
 \section{Precisione dei calcoli}\label{sec:qualita}
 Lo script \path{src/evaluate/evaluate_llm.py} calcola le metriche. I risultati riempiono il file \path{src/output/evaluate/log_valutazione.txt}. L'analisi confronta il valore calcolato dal modello linguistico con il valore reale della mappa.
 
-Risultati sul seed 1337:
+Risultati sullo scenario di base:
 \begin{itemize}
 \item L'errore medio ammonta a 0.0122. Il bias segna $-0.0104$. Il 97.4\% delle risposte ha un errore inferiore a 0.05.
 \item Gli indici di correlazione superano lo 0.9.
 \end{itemize}
-I nodi critici generano l'errore pi\`u alto con 0.0140. La ricerca della chiave risulta la fase pi\`u soggetta a imprecisioni.
+I nodi decisivi generano l'errore pi\`u alto con 0.0140. La ricerca della chiave risulta la fase pi\`u soggetta a imprecisioni.
 
-I test sui cinque seed restituiscono un errore medio di 0.0153 con un bias di $-0.0116$. Il 96.8\% si posiziona sotto la soglia di 0.05.
+I test sui cinque livelli restituiscono un errore medio di 0.0153 con un bias di $-0.0116$. Il 96.8\% si posiziona sotto la soglia di 0.05.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_scatter.png}
-\caption{Il grafico mostra la correlazione tra i valori calcolati dall'algoritmo classico e le stime del modello linguistico. L'asse orizzontale rappresenta i valori reali. L'asse verticale rappresenta le stime. Una stima perfetta posiziona i punti sulla linea diagonale. I punti si concentrano lungo questa linea. Questo indica una buona precisione del modello.}
+\caption{La Figura \ref{fig:scatter1337} valuta l'accuratezza del modello linguistico. L'asse orizzontale (X) riporta i valori ottimi attesi. L'asse verticale (Y) espone i valori stimati dal modello. I punti del grafico rappresentano le singole predizioni. Una predizione perfetta cade esattamente sulla diagonale del grafico. I dati formano un agglomerato denso attorno a questa linea. Il modello fornisce stime vicine al valore matematico reale.}
 \label{fig:scatter1337}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_residuals.png}
-\caption{Il grafico analizza gli errori del modello. L'asse orizzontale mostra i valori attesi. L'asse verticale mostra la differenza tra il valore stimato e il valore reale. I punti sotto lo zero indicano una sottostima. Il modello tende a sottostimare i valori.}
+\caption{La Figura \ref{fig:resid1337} illustra la distribuzione degli errori del modello. L'asse orizzontale (X) riporta i valori ottimi attesi. L'asse verticale (Y) espone il residuo. Il residuo corrisponde alla differenza matematica tra stima e valore reale. I punti posizionati sulla linea dello zero indicano predizioni perfette. I punti sotto la linea dello zero indicano una sottostima. La maggioranza dei punti si colloca nella parte inferiore del grafico. Il modello genera valutazioni inferiori rispetto ai valori effettivi.}
 \label{fig:resid1337}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b_scatter.png}
-\caption{Il grafico estende l'analisi a cinque scenari differenti considerando solo gli stati critici. La struttura ricalca il grafico precedente sui valori stimati e reali. I punti risultano maggiormente distanti dalla linea diagonale. Questo indica una minore precisione del modello nel valutare scenari diversi.}
+\caption{La Figura \ref{fig:scatter5seed} ripete l'analisi di accuratezza includendo cinque layout di mappa differenti. L'asse orizzontale (X) indica i valori ottimi calcolati. L'asse verticale (Y) indica le stime. I punti mostrano una dispersione maggiore rispetto alla valutazione su singola mappa. La distanza dalla diagonale aumenta. L'introduzione di ostacoli variabili peggiora la precisione delle stime.}
 \label{fig:scatter5seed}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b_residuals.png}
-\caption{Il grafico riporta gli errori del modello sui cinque scenari. L'asse orizzontale mostra i valori attesi. L'asse verticale mostra la differenza tra stima e realt\`a. La distribuzione dei punti appare pi\`u ampia rispetto al caso singolo. La tendenza a sottostimare si conferma.}
+\caption{La Figura \ref{fig:resid5seed} espande l'analisi dei residui sui cinque layout di mappa. L'asse orizzontale (X) indica i valori attesi. L'asse verticale (Y) quantifica l'errore. La distribuzione dei punti copre un intervallo verticale maggiore. La densità permane sotto la linea dello zero. L'errore sistematico di sottostima si ripete in tutti gli scenari testati.}
 \label{fig:resid5seed}
 \end{figure}
 
@@ -141,21 +141,21 @@ Il bias negativo di $-0.01$ corrisponde all'errore sistematico di circa un passo
 
 \section{Qualit\`a dell'azione suggerita}\label{sec:azioni}
 L'algoritmo valuta la correttezza dell'azione proposta dal modello. La valutazione tollera piccole imprecisioni numeriche causate dal limite dei decimali.
-Dati per il seed 1337:
+Dati per lo scenario di base:
 \begin{itemize}
 \item L'azione suggerita risulta essere la migliore nel 94.1\% dei casi. L'azione casuale ottiene il 16.7\%.
-\item La perdita attesa dovuta a scelte sub-ottimali equivale a 0.0011.
-\item La correttezza sui nodi critici raggiunge l'82.8\%.
+\item La perdita attesa causata da scelte sub-ottimali ammonta a 0.0011.
+\item La correttezza sui nodi decisivi raggiunge l'82.8\%.
 \end{itemize}
-Il modello sbaglia i conteggi assoluti dei passi ma identifica l'azione preferibile. Le Figure \ref{fig:acc1337} e \ref{fig:acc5seed} riportano il dettaglio per categorie.
+Il modello sbaglia i conteggi assoluti dei passi ma identifica l'azione preferibile. Le Figure \ref{fig:acc1337} e \ref{fig:acc5seed} riportano i dati per categorie.
 
-L'analisi sui cinque seed evidenzia l'azione migliore nel 91.9\% delle situazioni.
+L'analisi sui cinque livelli evidenzia l'azione migliore nel 91.9\% delle situazioni.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_accuracy.png}
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_mae_bucket.png}
-\caption{La figura contiene due grafici a barre. Il primo grafico mostra la percentuale di risposte corrette del modello per diverse categorie di stati. Il secondo grafico mostra l'entit\`a dell'errore per le stesse categorie. Gli stati definiti critici registrano gli errori pi\`u alti.}
+\caption{La Figura \ref{fig:acc1337} frammenta i risultati in base alla tipologia di stato valutato. Il primo grafico a barre quantifica le selezioni corrette del modello. Una selezione corretta equivale all'azione migliore possibile per quello specifico stato. Il secondo grafico misura l'errore numerico per categoria. La categoria dei nodi decisivi registra la minor precisione. L'interazione con la porta genera maggiore incertezza nei calcoli del modello.}
 \label{fig:acc1337}
 \end{figure}
 
@@ -163,22 +163,22 @@ L'analisi sui cinque seed evidenzia l'azione migliore nel 91.9\% delle situazion
 \centering
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b_accuracy.png}
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seeds13507-19920-32455-54937-69693_gpt-oss_120b_mae_bucket.png}
-\caption{La figura presenta due grafici a barre relativi a cinque scenari. Il primo grafico mostra quante volte il modello suggerisce l'azione migliore o la seconda migliore. Il secondo grafico mostra l'errore medio diviso per categorie.}
+\caption{La Figura \ref{fig:acc5seed} replica l'analisi categoriale applicata ai cinque scenari estesi. Il grafico sinistro riporta il tasso di successo nell'identificare l'azione ottimale. Il grafico destro quantifica l'errore medio assoluto. Il peggioramento delle metriche coinvolge uniformemente tutte le tipologie di stato. Le interazioni con gli oggetti di gioco si confermano le fasi di maggiore complessità di calcolo.}
 \label{fig:acc5seed}
 \end{figure}
 
 \section{Impatto delle stime iniziali}\label{sec:init}
-Il codice sorgente per l'agente \`e \path{src/agent/doorkey_qtable_llminit.py}. L'agente ragiona su un sistema di coordinate relative all'obiettivo intermedio. Questo approccio unifica il comportamento su seed diversi. Il sistema inserisce per prime le stime calcolate. Le celle rimanenti partono da zero. Il Q-learning procede elaborando le celle in ordine decrescente di valore stimato.
+Il codice sorgente per l'agente \`e \path{src/agent/doorkey_qtable_llminit.py}. L'agente ragiona su un sistema di coordinate relative all'obiettivo intermedio. L'approccio unifica il comportamento su mappe diverse. Il sistema inserisce per prime le stime calcolate. Le celle rimanenti partono da zero. Il Q-learning procede elaborando le celle in ordine decrescente di valore stimato.
 
-La funzione \path{optimal_policy_metrics} valuta il comportamento dell'agente rispetto alla soluzione teorica perfetta.
+La funzione \path{optimal_policy_metrics} dal file \path{src/agent/doorkey_qtable_llminit.py} valuta il comportamento dell'agente rispetto alla soluzione teorica perfetta.
 
 La prima metrica definisce l'accordo con la politica ottima. Questo parametro conta le volte in cui la decisione dell'agente coincide con l'azione ideale calcolata a priori. Un valore pari a 1 indica una totale aderenza alla strategia perfetta. Un valore basso indica scelte sub-ottimali. Questo numero valuta la precisione delle regole apprese.
 
-La seconda metrica calcola la perdita di valore media. Questo indicatore quantifica il costo degli errori. Ogni mossa sbagliata allontana l'agente dall'obiettivo e abbassa il punteggio atteso. Una perdita media di 0.0067 si traduce nella perdita di una frazione di turno di gioco. Valori prossimi allo zero segnalano traiettorie eccellenti. Valori alti evidenziano percorsi tortuosi.
+La seconda metrica calcola la perdita di valore media. Questo indicatore quantifica il costo degli errori. Ogni mossa sbagliata allontana l'agente dall'obiettivo e abbassa il punteggio atteso. Una perdita media di 0.0067 genera la perdita di una frazione di turno di gioco. Valori prossimi allo zero segnalano traiettorie ottime. Valori alti evidenziano percorsi tortuosi.
 
 Il sistema elabora entrambe le metriche esclusivamente sui nodi esplorati durante le partite effettive.
 
-I test utilizzano il seed 1337 per 2000 episodi. Il parametro $\alpha$ vale 0.07. Il parametro $\gamma$ vale 0.9. Il decadimento vale 0.99. Il codice inserisce i 20 nodi critici principali.
+I test valutano lo scenario di base per 2000 episodi. Il parametro $\alpha$ vale 0.07. Il parametro $\gamma$ vale 0.9. Il decadimento vale 0.99. Il codice inserisce i 20 nodi decisivi principali.
 \begin{itemize}
 \item L'agente inizializzato completa la mappa in 17 passi con un accordo di 0.585.
 \item L'agente standard con gli stessi parametri non completa la mappa e impiega 450 passi.
@@ -189,63 +189,94 @@ Il controllo senza inizializzazione fallisce con gli stessi parametri base. Le s
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/agents/qtable_llminit_seed_1337_gpt-oss_120b_vs_samehp.png}
-\caption{Il grafico confronta le prestazioni di due agenti nel tempo. L'asse orizzontale rappresenta il numero di episodi giocati. L'asse verticale misura il tasso di successo. La linea relativa all'agente con stime iniziali sale rapidamente a uno. La linea dell'agente senza stime iniziali rimane piatta a zero. Questo dimostra l'utilit\`a delle stime iniziali.}
+\caption{La Figura \ref{fig:samehp} traccia il progresso dell'apprendimento per rinforzo. L'asse orizzontale (X) numera gli episodi di addestramento progressivi. L'asse verticale (Y) riporta la percentuale di vittorie. La linea superiore rappresenta l'agente dotato di tabella precompilata dal modello linguistico. La linea inferiore rappresenta l'agente basato su tabella vuota. L'agente potenziato raggiunge il 100\% di completamento. L'agente di controllo non risolve mai il livello. Le stime innescano la soluzione del problema.}
 \label{fig:samehp}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/agents/qtable_llminit_seed_1337_gpt-oss_120b_vs_std.png}
-\caption{Il grafico confronta l'agente potenziato con un agente standard ottimizzato. Entrambe le linee raggiungono il tasso di successo massimo. L'asse orizzontale conta gli episodi. L'asse verticale mostra il raggiungimento dell'obiettivo. Le prestazioni risultano simili.}
+\caption{La Figura \ref{fig:vstd} confronta l'agente precompilato con un agente standard dotato di iperparametri ottimizzati per convergere. L'asse orizzontale (X) numera gli episodi giocati. L'asse verticale (Y) misura le vittorie. Entrambi gli agenti apprendono la strategia corretta. L'agente precompilato richiede un numero inferiore di episodi per completare i primi percorsi. La pendenza iniziale della curva ne certifica la superiorità nelle primissime fasi.}
 \label{fig:vstd}
 \end{figure}
 
-Il secondo ciclo di test esegue l'addestramento su cinque seed differenti. Le mappe sono 13507, 19920, 32455, 54937 e 69693. L'addestramento impiega le coordinate relative e prosegue per 4000 turni. I parametri salgono a $\alpha=0.1$ e $\gamma=0.8$. Il sistema inserisce 500 stime iniziali. Il codice verifica le prestazioni sul seed conosciuto 13507 e sul nuovo seed 6499.
-Il tasso di successo sulle mappe apprese raggiunge il 100\% con 23 passi di media. Il tasso di successo sulla mappa nuova si ferma allo 0\%. I controlli senza stime registrano risultati nulli su tutta la linea. Cinque layout non consentono al sistema di imparare regole generali esportabili su nuovi livelli (Figure \ref{fig:multisamehp} e \ref{fig:multivstd}).
+Il secondo ciclo di test esegue l'addestramento su cinque livelli differenti. Le mappe variano la disposizione dei muri. L'addestramento valuta le coordinate relative e prosegue per 4000 turni. I parametri salgono a $\alpha=0.1$ e $\gamma=0.8$. Il sistema inserisce 500 stime iniziali. Il codice verifica le prestazioni su un livello già affrontato e su un nuovo livello di test.
+Il tasso di successo sulle mappe apprese raggiunge il 100\% con 23 passi di media. Il tasso di successo sulla mappa nuova si ferma allo 0\%. I controlli senza stime registrano risultati nulli. Cinque layout non consentono al sistema di imparare regole generali esportabili su nuovi livelli (Figure \ref{fig:multisamehp} e \ref{fig:multivstd}).
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/agents/qtable_llminit_multiseed_train13507-19920-32455-54937-69693_evalin13507_evalnew6499_vs_samehp.png}
-\caption{Il grafico mostra le prestazioni su mappe mai viste durante l'addestramento. L'asse orizzontale conta gli episodi. L'asse verticale indica il successo. Nessun agente riesce a risolvere le nuove mappe. L'apprendimento non si trasferisce a scenari sconosciuti.}
+\caption{La Figura \ref{fig:multisamehp} valuta la capacità di generalizzazione del sistema. Il test esamina il comportamento degli agenti all'interno di un livello escluso dalla fase di addestramento. L'asse orizzontale (X) numera gli episodi. L'asse verticale (Y) registra il tasso di successo. Le curve rimangono ancorate allo zero. Nessun agente supera il livello. L'apprendimento risulta vincolato alla topologia fissa dei muri incontrati in addestramento.}
 \label{fig:multisamehp}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../src/output/agents/qtable_llminit_multiseed_train13507-19920-32455-54937-69693_evalin13507_evalnew6499_vs_std.png}
-\caption{Il grafico riporta un ulteriore test su mappe sconosciute. L'analisi confronta l'agente standard ottimizzato con le nuove mappe. Il tasso di successo rimane nullo per tutti i casi. Nessuna configurazione generalizza l'apprendimento.}
+\caption{La Figura \ref{fig:multivstd} ribadisce l'incapacità di risolvere livelli inediti introducendo parametri di addestramento aggressivi. L'asse orizzontale (X) numera gli episodi. L'asse verticale (Y) riporta il tasso di completamento. Il grafico mostra il fallimento totale. Le regole apprese sui cinque scenari di base generano azioni inutili o dannose di fronte a una configurazione di muri sconosciuta.}
 \label{fig:multivstd}
 \end{figure}
 
-I test con quantit\`a variabili di stati mostrano come un numero maggiore di nodi acceleri l'apprendimento. Il numero finale di passi converge sempre verso il minimo indispensabile. 
+I test con quantit\`a variabili di stati mostrano un apprendimento accelerato in presenza di numerosi nodi. Il numero finale di passi converge sempre verso il minimo indispensabile. 
 
 \section{Scelta dei parametri}\label{sec:iperparametri}
-La configurazione base impiega $\alpha=0.07$, $\gamma=0.9$, limite esplorativo minimo 0.05 e blocco a 450 passi.
+La configurazione base adotta $\alpha=0.07$, $\gamma=0.9$, limite esplorativo minimo 0.05 e blocco a 450 passi.
 \begin{itemize}
 \item Il parametro $\gamma$ scende a 0.9. I valori alti appiattiscono la distanza numerica tra due celle vicine. Un valore di 0.9 aumenta lo scarto e facilita la scelta dell'azione migliore.
-\item Il programma adotta un tasso $\alpha$ ridotto. La tabella parte gi\`a popolata di valori sensati. Un tasso di aggiornamento massiccio distruggerebbe queste stime prematuramente. I test con $\alpha=0.9$ mostrano un avvio rapido ma il sistema si stabilizza con ritardo.
+\item Il programma adotta un tasso $\alpha$ ridotto. La tabella parte popolata di valori sensati. Un tasso di aggiornamento massiccio distrugge queste stime prematuramente. I test con $\alpha=0.9$ mostrano un avvio rapido accompagnato da stabilizzazione ritardata.
 \item Il limite sui passi consente i vagabondaggi esplorativi nelle prime fasi senza interrompere la partita prematuramente.
 \end{itemize}
 
-\section{Limiti della ricerca}\label{sec:limiti}
-Il problema principale consiste nell'incapacit\`a di risolvere mappe mai viste. Il sistema unifica le coordinate. I muri e gli ostacoli variano per ogni schema. Il modello linguistico impiega molto tempo per calcolare le valutazioni per singolo nodo. La copertura parziale dei nodi funziona bene su mappe contenute. L'impatto si riduce drasticamente su mappe vaste. L'esecuzione dell'algoritmo preliminare su due seed produce statistiche anomale dettate dal caso.
+\section{Limiti dell'approccio}\label{sec:limiti}
+Il problema principale consiste nell'incapacit\`a di risolvere mappe mai viste. Il sistema unifica le coordinate. I muri e gli ostacoli variano per ogni schema. Il modello linguistico richiede molto tempo per calcolare le valutazioni per singolo nodo. La copertura parziale dei nodi funziona bene su mappe contenute. L'impatto si riduce drasticamente su mappe vaste. L'esecuzione dell'algoritmo preliminare su due scenari produce statistiche anomale dettate dal caso.
 
-\section{Sviluppi futuri}\label{sec:conclusioni}
-I risultati sul singolo seed dimostrano l'efficacia del meccanismo. L'agente apprende pi\`u velocemente dei modelli standard. L'esperimento su cinque mappe fallisce nel generare regole universali per mappe nuove.
+\section{Sviluppi futuri}\label{sec:sviluppi}
+I risultati sul singolo livello dimostrano l'efficacia del meccanismo. L'agente apprende velocemente rispetto ai modelli standard. L'esperimento su cinque mappe fallisce nel generare regole universali per mappe nuove.
 Tre punti necessitano di ulteriore sviluppo.
 \begin{enumerate}
-\item \textbf{Estensione del set di addestramento.} L'uso di molte decine di seed permetterebbe all'agente di imparare a gestire gli ostacoli imprevisti.
-\item \textbf{Modelli dedicati.} Una rete neurale specializzata in stime numeriche ridurrebbe i tempi di attesa. La tabella iniziale si popolerebbe molto pi\`u in fretta.
-\item \textbf{Stima in tempo reale.} Il sistema potrebbe interrogare il modello solo durante l'esplorazione di celle nuove. Questo eviterebbe il calcolo anticipato di tutti gli stati.
+\item \textbf{Estensione del set di addestramento.} L'uso di molte decine di livelli permette all'agente di imparare a gestire ostacoli imprevisti.
+\item \textbf{Modelli dedicati.} Una rete neurale specializzata in stime numeriche riduce i tempi di attesa. La tabella iniziale si popola in tempi inferiori.
+\item \textbf{Stima in tempo reale.} Il sistema interroga il modello solo durante l'esplorazione di celle nuove. Questa azione evita il calcolo anticipato di tutti gli stati.
 \end{enumerate}
 I test attuali rappresentano prove di fattibilit\`a eseguite in tiratura singola per ridurre i costi computazionali.
 
+\clearpage
 \appendix
 \section{Appendice: ambiente FrozenLake}\label{sec:frozenlake}
-L'ambiente \path{FrozenLake-v1} introduce esiti probabilistici sulle mosse. Il sistema usa un modello linguistico sui 18 nodi critici.
+L'ambiente \path{FrozenLake-v1} introduce esiti probabilistici sulle mosse. Il sistema interroga un modello linguistico sui 18 nodi decisivi.
 
-I risultati con 120 miliardi di parametri riportano un errore elevato di 0.1228. Le selezioni corrette si fermano al 55.6\%. I modelli faticano a calcolare la media delle probabilit\`a tra esiti incerti tramite ragionamento testuale. Il problema necessita di altre verifiche.
+I risultati con il modello gpt-oss-120b riportano un errore elevato di 0.1228. Le selezioni corrette si fermano al 55.6\%. I modelli faticano a calcolare la media delle probabilit\`a tra esiti incerti tramite ragionamento testuale. Il problema necessita di altre verifiche.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../src/output/evaluate_frozenlake/grafici/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b_scatter.png}
+\caption{La Figura valuta l'accuratezza del modello gpt-oss-120b sull'ambiente FrozenLake. L'asse orizzontale (X) riporta i valori ottimi calcolati. L'asse verticale (Y) espone i valori stimati. I punti evidenziano una forte discrepanza rispetto alla diagonale ideale. Il modello genera valutazioni imprecise in presenza di esiti stocastici.}
+\label{fig:fl_scatter}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.48\textwidth]{../src/output/evaluate_frozenlake/grafici/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b_accuracy.png}
+\includegraphics[width=0.48\textwidth]{../src/output/evaluate_frozenlake/grafici/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b_mae_bucket.png}
+\caption{La Figura frammenta i risultati del modello gpt-oss-120b sull'ambiente FrozenLake in base alla tipologia di stato valutato. Il primo grafico a barre quantifica le selezioni corrette. Il secondo grafico misura l'errore numerico. Gli errori risultano distribuiti uniformemente. L'incertezza penalizza l'efficacia del modello su tutti gli scenari.}
+\label{fig:fl_acc}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../src/output/agents/frozenlake_qtable_llminit_8x8_slippery_seed_1337_gpt-oss_120b_vs_samehp.png}
+\caption{La Figura traccia il progresso dell'apprendimento per rinforzo sull'ambiente FrozenLake. L'asse orizzontale (X) numera gli episodi di addestramento. L'asse verticale (Y) indica il successo. La linea relativa all'agente con stime iniziali e la linea dell'agente standard evidenziano l'impatto dei valori stimati in ambienti probabilistici.}
+\label{fig:fl_samehp}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../src/output/agents/frozenlake_qtable_llminit_8x8_slippery_seed_1337_gpt-oss_120b_vs_std.png}
+\caption{La Figura confronta l'agente precompilato con un agente standard dotato di iperparametri ottimizzati sull'ambiente FrozenLake. Entrambi gli agenti incontrano difficoltà. Le prestazioni indicano l'inadeguatezza dell'attuale metodo di estrazione per scenari non deterministici.}
+\label{fig:fl_vstd}
+\end{figure}
+
+\clearpage
 \begin{thebibliography}{9}
 \bibitem{sutton2018} Sutton, R. S., Barto, A. G. \textit{Reinforcement Learning: An Introduction}, 2nd ed., MIT Press, 2018.
 \bibitem{minigrid2023} Chevalier-Boisvert, M. et al. MiniGrid and MiniWorld. \textit{NeurIPS} 36, 2023.
