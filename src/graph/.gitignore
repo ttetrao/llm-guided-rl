@@ -1,7 +1,0 @@
-# cache generata, opzionale da versionare solo i sorgenti
-# mantiene la cartella ma ignora i file pkl/json grandi
-data/*.pkl
-data/*.json
-!data/.gitkeep
-__pycache__/
-*.pyc

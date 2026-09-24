@@ -15,7 +15,7 @@ Input multi-seed (envelope con seeds in cima): senza --seed allena su tutti i
 seed del file (1 seed/episodio, --train-seeds per sottoinsieme) e doppia eval
 finale su --eval-in-seed (default primo train) + --eval-new-seed nuovo
 (default max(train)+1 libero).
-Output: graph/data/qtable_llminit_seed_X[_tag].json + .png plots.
+Output: src/output/agents/qtable_llminit_seed_X[_tag].json + .png plots.
 """
 import argparse
 import json
@@ -32,9 +32,9 @@ import minigrid  # noqa: F401, registers MiniGrid envs
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))
 from env.view_wrapper import DoorKeyViewSystem  # noqa: E402
-from doorkey_state import encode  # noqa: E402
-from doorkey_ddqn_pretrained import DATA_DIR, resolve_input  # noqa: E402
-from doorkey_ddqn_pretrained import ACTION_IDX, STAGE_IDX, STAGE_TARGET  # noqa: E402
+from doorkey_state import encode, resolve_input  # noqa: E402
+from doorkey_state import ACTION_IDX, STAGE_IDX, STAGE_TARGET  # noqa: E402
+from paths import AGENTS_DIR, CACHE_DIR  # noqa: E402
 
 try:  # policy ottima da VI (solo metriche; fallisce solo fuori dal package)
     from graph.mdp_graph import load_or_build as load_opt_mdp
@@ -75,7 +75,7 @@ def load_qinit(input_path, max_init=None):
     assert seeds, "no seeds in file"
     targets_per_seed = {}
     for s in seeds:
-        mdp_path = DATA_DIR / f"mdp_8x8_seed{s}.json"
+        mdp_path = CACHE_DIR / f"mdp_8x8_seed{s}.json"
         assert mdp_path.exists(), f"missing {mdp_path} (key/door/goal positions)"
         gi = json.loads(mdp_path.read_text())["grid_info"]
         targets_per_seed[s] = {"key_pos": tuple(gi["key_pos"]),
@@ -450,6 +450,12 @@ def mine_hp(args):
             "eps_decay": args.eps_decay, "eps_min": args.eps_min}
 
 
+def std_hp(args):
+    """Hparams Vanilla-std (default STD, override con --std-* per multi-seed)."""
+    return {"alpha": args.std_alpha, "gamma": args.std_gamma,
+            "eps_decay": args.std_eps_decay, "eps_min": args.std_eps_min}
+
+
 def plot_pairs(runs, stem, base_title, args, seed, input_path):
     """Due PNG _vs_std / _vs_samehp da runs [{label,hist,ev,opt,hp,n_init}].
 
@@ -464,14 +470,14 @@ def plot_pairs(runs, stem, base_title, args, seed, input_path):
                                                "max_init": args.max_init},
                                   r["n_init"], seed, input_path.name,
                                   r["ev"], r["opt"]) for r in sel]
-        plot_cmp(sel, DATA_DIR / f"{stem}{suffix}.png",
+        plot_cmp(sel, AGENTS_DIR / f"{stem}{suffix}.png",
                  f"{base_title} | {a} vs {b}", footnotes)
 
 
 def save_run(agent, hist, ev, args, name, label, file_seed, seed, einfo,
              input_path, train_seeds=None, eval_new=None,
              eval_in_seed=None, eval_new_seed=None, opt=None):
-    out = DATA_DIR / f"{name}.json"
+    out = AGENTS_DIR / f"{name}.json"
     # ponytail: seeds in cima; modo singolo identico a prima + chiave "seeds"
     hp = {"episodes": args.episodes, "alpha": args.alpha,
           "gamma": args.gamma, "eps_decay": args.eps_decay,
@@ -519,7 +525,7 @@ def save_run(agent, hist, ev, args, name, label, file_seed, seed, einfo,
         hp_plot = dict(hp, seed=seed, n_init=agent.n_init,
                        input=input_path.name)
         plot_run(hist, ev, f"{label} (seed {seed})",
-                 args.plot or (DATA_DIR / f"{name}.png"), ev_new=eval_new,
+                 args.plot or (AGENTS_DIR / f"{name}.png"), ev_new=eval_new,
                  footnote=footnote_for(hp_plot, ev, opt))
 
 
@@ -564,12 +570,20 @@ def main():
     ap = argparse.ArgumentParser(
         description="Q-Learning tabulare standard con init Q=V_LLM")
     ap.add_argument("--input", default=None,
-                    help="file JSON in graph/data/ (o path)")
+                    help="file JSON in src/output/llm/ (o path)")
     ap.add_argument("--episodes", type=int, default=3000)
     ap.add_argument("--alpha", type=float, default=0.15)
     ap.add_argument("--gamma", type=float, default=0.99)
     ap.add_argument("--eps_decay", type=float, default=0.995)
     ap.add_argument("--eps_min", type=float, default=0.05)
+    ap.add_argument("--std-alpha", type=float, default=STD["alpha"], dest="std_alpha",
+                    help="alpha del Vanilla-std (default standard single-seed)")
+    ap.add_argument("--std-gamma", type=float, default=STD["gamma"], dest="std_gamma",
+                    help="gamma del Vanilla-std (default standard single-seed)")
+    ap.add_argument("--std-eps-decay", type=float, default=STD["eps_decay"], dest="std_eps_decay",
+                    help="eps_decay del Vanilla-std (default standard single-seed)")
+    ap.add_argument("--std-eps-min", type=float, default=STD["eps_min"], dest="std_eps_min",
+                    help="eps_min del Vanilla-std (default standard single-seed)")
     ap.add_argument("--seed", type=int, default=None,
                     help="seed singolo per train ed eval "
                          "(default: quello del file input; con input multi-seed "
@@ -692,6 +706,10 @@ def main():
         m2 = optimal_policy_metrics({(0, 1, 0, 2): [0.0] * 7}, mdp_toy)
         assert m2["agreement"] == 0.0 and m2["mean_value_loss"] > 0.0, m2
         assert set(STD) == {"alpha", "gamma", "eps_decay", "eps_min"}
+        assert std_hp(SimpleNamespace(std_alpha=0.1, std_gamma=0.9,
+                                       std_eps_decay=0.5,
+                                       std_eps_min=0.01)) == {
+            "alpha": 0.1, "gamma": 0.9, "eps_decay": 0.5, "eps_min": 0.01}
         assert [(a, b, s) for a, b, s in PAIRS] == [
             ("LLM-init", "Vanilla-std", "_vs_std"),
             ("LLM-init", "Vanilla (same hp)", "_vs_samehp")]
@@ -705,7 +723,7 @@ def main():
         print("WARN: graph non importabile, metriche policy ottima saltate")
         opt_mdp = None
     else:
-        opt_mdp = load_opt_mdp(seed=seed, size=8, out_dir=DATA_DIR)
+        opt_mdp = load_opt_mdp(seed=seed, size=8, out_dir=CACHE_DIR)
 
     tag = args.tag
     if tag is None:
@@ -724,7 +742,7 @@ def main():
     if args.compare:
         specs = (("LLM-init", list(qinit.items()), mine_hp(args), "llminit"),
                  ("Vanilla (same hp)", [], mine_hp(args), "vsame"),
-                 ("Vanilla-std", [], STD, "vstd"))
+                 ("Vanilla-std", [], std_hp(args), "vstd"))
         runs = []
         for label, init, hp, suffix in specs:
             random.seed(seed)

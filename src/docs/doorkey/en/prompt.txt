@@ -2,20 +2,18 @@ You are an RL agent in the DoorKey environment. Read <documentation> and <legend
 works and what each action is for.
 After reading the q-function definition in <q-definition> and the v-function definition in <v-definition> your task is to look at
 the current state in <current_state id="xxxx"> (xxxx is the code to report in "code") and the 6 successor states already computed
-explicitly in <left>, <right>, <forward>, <pickup>, <drop>, <toggle> where each contains the map of s' = T(s,a)
+explicitly in <a> (<left>, <right>, <forward>, <pickup>, <drop>, <toggle>) where each contains the map of s' = T(s,a)
 for that action (done is ignored because it is always a self-loop). For each a generate Q* from the V* values:
 Q*(s,a) = r + γ·V*(s') where s' is the state in <a>, r=1 if s' is the goal otherwise r=0, γ=0.99.
-Estimate V*(s') from the map in <a>: V*(s')=γ^d with d=actions from s' (not s) to the goal. If s' is the goal (G, terminal): r=1, V*=0, Q*=1.0. γ multiplies only V*(s'), never r.
 In practice read r from the goal rule and V*(s') from the state in <a>, do not infer the transitions. Evaluate drop like any other action from its s' map; it is often a self-loop but do not assume its rank a priori.
 
 Estimation rules:
 - understand the rules in the documentation (in particular deterministic MDP and normalized reward r∈{0,1})
 - read the definitions and distinguish v_π/q_π (generic policy) from v_*/q_* (optimal policy, max over π)
 - consider a gamma of 0.99 and apply the optimality equation, not the v_π Bellman equation
-- when counting d, count every executed action as 1 discount step, even if it does not move the agent: d is the number of actions from s' (not s) to the goal, not of cells traversed; the step s→s' is already discounted once by the outer γ; derive each action's effect from the <documentation>.
 - understand what the state describes (x,y,dir,has_key,door_open) and that each <a> already contains s'=T(s,a)
 - Outside the JSON no other text; inside analysis cover all 3 points below, no length limits: every sentence must serve one of the 3 points, nothing else. Identical analyses across different actions invalidate the response: each analysis must contain at least one detail specific to its s'.
-- in analysis you must explicitly cite: 1) which definition (v_* or q_*) and which optimality equation, 2) which fact from <documentation>/<legend> (deterministic, r=1 only if s' is goal) you used to adapt E[·] to the DoorKey case, and 3) the explicit computation with this s' numbers (estimate of V*(s') as γ^d with d=actions from s' to goal, then Q*=r+0.99·V*(s'); if s' is goal use r=1, V*=0, Q*=1.0)
+- in analysis you must explicitly cite: 1) which definition (v_* or q_*) and which optimality equation, 2) which fact from <documentation>/<legend> (deterministic, r=1 only if s' is goal) you used to adapt E[·] to the DoorKey case, and 3) the explicit computation with this s' numbers
 - values must be JSON numbers (float, not strings) in [0,1], e.g. 0.73 (r=1.0 on goal already)
 - Never output 0.0 as a fallback for uncertainty.
 - Don't come up with numbers that you can't explain.
@@ -24,7 +22,7 @@ Estimation rules:
 
 VERY IMPORTANT:
 Mandatory output (solely and exclusively an array of valid JSON objects, with no text before or after, no markdown, no "..."):
-[{
+{
  "code": string,
   "preliminary-analysis": string,
   "q-function-values": {
@@ -53,7 +51,7 @@ Mandatory output (solely and exclusively an array of valid JSON objects, with no
           "value": float
     }
   }
-}, ...]
+}
 
 <v-definition></v-definition>
 <q-definition></q-definition>

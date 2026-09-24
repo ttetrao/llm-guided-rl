@@ -33,8 +33,9 @@ from env.view_wrapper import DoorKeyViewSystem  # noqa: E402
 from doorkey_qtable_llminit import (  # noqa: E402
     load_qinit, QLearningAgent, train, evaluate, save_run,
     optimal_policy_metrics, footnote_for, load_opt_mdp,
-    plot_cmp, COLORS, ma, cmp_footnote, STD, PAIRS, plot_pairs)
-from doorkey_ddqn_pretrained import DATA_DIR, resolve_input  # noqa: E402
+    plot_cmp, COLORS, ma, cmp_footnote, STD, PAIRS, plot_pairs, std_hp)
+from doorkey_state import resolve_input  # noqa: E402
+from paths import AGENTS_DIR, CACHE_DIR  # noqa: E402
 
 
 def make_title(file_seeds):
@@ -73,6 +74,14 @@ def main():
     ap.add_argument("--gamma", type=float, default=0.99)
     ap.add_argument("--eps_decay", type=float, default=0.995)
     ap.add_argument("--eps_min", type=float, default=0.05)
+    ap.add_argument("--std-alpha", type=float, default=STD["alpha"], dest="std_alpha",
+                    help="alpha del Vanilla-std (default standard single-seed)")
+    ap.add_argument("--std-gamma", type=float, default=STD["gamma"], dest="std_gamma",
+                    help="gamma del Vanilla-std (default standard single-seed)")
+    ap.add_argument("--std-eps-decay", type=float, default=STD["eps_decay"], dest="std_eps_decay",
+                    help="eps_decay del Vanilla-std (default standard single-seed)")
+    ap.add_argument("--std-eps-min", type=float, default=STD["eps_min"], dest="std_eps_min",
+                    help="eps_min del Vanilla-std (default standard single-seed)")
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument("--max_init", type=int, default=None)
     ap.add_argument("--max_steps", type=int, default=450)
@@ -88,6 +97,10 @@ def main():
     if args.selfcheck:  # ponytail: unico check su ma + STD + stem + label
         assert list(ma([0, 1, 1, 1])) == [0.0, 0.5, 2 / 3, 0.75]
         assert set(STD) == {"alpha", "gamma", "eps_decay", "eps_min"}
+        assert std_hp(SimpleNamespace(std_alpha=0.1, std_gamma=0.9,
+                                       std_eps_decay=0.5,
+                                       std_eps_min=0.01)) == {
+            "alpha": 0.1, "gamma": 0.9, "eps_decay": 0.5, "eps_min": 0.01}
         assert set(COLORS) == {"LLM-init", "Vanilla (same hp)", "Vanilla-std"}
         assert [(a, b, s) for a, b, s in PAIRS] == [
             ("LLM-init", "Vanilla-std", "_vs_std"),
@@ -119,7 +132,7 @@ def main():
         print("WARN: graph non importabile, metriche policy ottima saltate")
         opt_mdp = None
     else:
-        opt_mdp = load_opt_mdp(seed=seed, size=8, out_dir=DATA_DIR)
+        opt_mdp = load_opt_mdp(seed=seed, size=8, out_dir=CACHE_DIR)
 
     def _opt_for(agent):
         if opt_mdp is None:
@@ -134,7 +147,7 @@ def main():
     if args.compare:
         specs += [("Vanilla (same hp)", [], mine, f"{stem}_vsame",
                    {**einfo, "n_rows": 0, "n_dups": 0, "n_clipped": 0}),
-                  ("Vanilla-std", [], STD, f"{stem}_vstd",
+                  ("Vanilla-std", [], std_hp(args), f"{stem}_vstd",
                    {**einfo, "n_rows": 0, "n_dups": 0, "n_clipped": 0})]
     runs = []
     for label, init, hp, name, info in specs:
@@ -158,7 +171,7 @@ def main():
                                                   "max_steps": args.max_steps},
                                      r["n_init"], seed, input_path.name,
                                      r["ev"], r["opt"]) for r in sel]
-            plot_cmp(sel, args.plot or (DATA_DIR / f"{stem}.png"),
+            plot_cmp(sel, args.plot or (AGENTS_DIR / f"{stem}.png"),
                      base_title, footnotes)
         else:
             if args.plot:

@@ -29,8 +29,8 @@ v2 (design):
   7. Bootstrap per stato/seed.
 
 Uso:
-    python -m evaluate.evaluate_frozenlake_llm --path graph/data/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b.json --outdir evaluate/output_frozenlake
-    python -m evaluate.evaluate_frozenlake_llm --path graph/data --gamma auto
+    python -m evaluate.evaluate_frozenlake_llm --path src/output/llm/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b.json --outdir src/output/evaluate_frozenlake
+    python -m evaluate.evaluate_frozenlake_llm --path src/output/llm --gamma auto
     python -m evaluate.evaluate_frozenlake_llm --path ... --tie-eps 1e-6
 """
 from __future__ import annotations
@@ -48,6 +48,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr
+from paths import EVAL_FL_DIR
 
 plt.rcParams.update({
     "figure.figsize": (8, 5.5),
@@ -96,6 +97,20 @@ DEFAULT_GAMMA = 0.99
 TIE_EPS_DEFAULT = 1e-6     # tolleranza per considerare due valori pari merito
 K_TOL = 2e-3               # tolleranza "on-grid" (v ≈ gamma^k)
 DK_CLIP = 6                # clip dell'istogramma Δk
+
+# Etichette corte per i titoli dei plot (i file restano con lo stem lungo).
+_SHORT_TAGS = {
+    "frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b": "FrozenLake 8x8 - gpt-oss",
+    "frozenlake_llm_8x8_slippery_q_seed1337_gemma-4-26b-a4b-it": "FrozenLake 8x8 - gemma",
+}
+
+
+def short_tag(stem, extra=""):
+    """Stem lungo del file -> etichetta breve per i titoli (ponytail: mappa fissa + fallback)."""
+    if stem in _SHORT_TAGS:
+        return _SHORT_TAGS[stem]
+    parts = stem.split("_")
+    return ("_".join(parts[-2:]) if len(parts) > 2 else stem) + extra
 
 
 # ------------------------------------------------------------------ helper
@@ -722,12 +737,13 @@ def plot_action_acc(act, title, path):
     _save(fig, path)
 
 
-def plot_mae_rmse_bucket(metrics, tag, gdir):
+def plot_mae_rmse_bucket(metrics, tag, gdir, title_tag=None):
+    tt = title_tag or tag
     mb = metrics.get("mae_by_bucket"); rb = metrics.get("rmse_by_bucket")
     if mb is None or rb is None or mb.empty:
         return
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
-    fig.suptitle(f"Errore per bucket — {tag} (FrozenLake)", fontsize=13, fontweight="bold")
+    fig.suptitle(f"Errore per bucket — {tt}", fontsize=13, fontweight="bold")
     for ax, data, ylabel, title in [(axes[0], mb, "MAE", "MAE per bucket"),
                                     (axes[1], rb, "RMSE", "RMSE per bucket")]:
         colors = [BUCKET_COLORS.get(k, "#6A6A6A") for k in data.index]
@@ -748,7 +764,7 @@ def plot_mae_rmse_bucket(metrics, tag, gdir):
     for bar, v in zip(ax.patches[:len(mb)], mb.values):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.001, f"{v:.3f}",
                 ha="center", va="bottom", fontsize=9, fontweight="bold")
-    ax.set_title(f"MAE per bucket — {tag}", loc="left", fontsize=13, pad=12, fontweight="bold")
+    ax.set_title(f"MAE per bucket — {tt}", loc="left", fontsize=13, pad=12, fontweight="bold")
     ax.set_ylabel("MAE", fontsize=10)
     ax.set_ylim(0, max(mb.values) * 1.22 if len(mb) and max(mb.values) > 0 else 1)
     ax.grid(True, axis="y", alpha=0.22, linestyle=":", linewidth=0.6); _despine(ax)
@@ -865,7 +881,7 @@ def main():
         description="Valuta LLM su FrozenLake slippery (corrispettivo di evaluate_llm.py) — v3: tie-aware, filtro per stato, Δk")
     parser.add_argument("--path", type=str, required=True,
                         help="file JSON/CSV o cartella con frozenlake_llm results")
-    parser.add_argument("--outdir", type=str, default="evaluate/output_frozenlake", help="output dir")
+    parser.add_argument("--outdir", type=str, default=str(EVAL_FL_DIR), help="output dir")
     parser.add_argument("--gamma", type=str, default=str(DEFAULT_GAMMA),
                         help="fattore di sconto (v = gamma^k); 'auto' per stima dai dati (default 0.99)")
     parser.add_argument("--tie-eps", type=float, default=TIE_EPS_DEFAULT,
@@ -942,14 +958,15 @@ def main():
         })
         act = compute_action_metrics(df_states, tie_eps=args.tie_eps)
         tag = Path(f).stem
+        stag = short_tag(tag, " (FrozenLake)")
 
         # ---- plot ----
-        plot_scatter(df_val, metrics, f"v_true vs v_llm — {tag} (FrozenLake slippery)", str(gdir / f"{tag}_scatter.png"))
-        plot_residuals(df_val, metrics, f"Residui v_llm − v_true — {tag} (FrozenLake)", str(gdir / f"{tag}_residuals.png"))
-        ok_k = plot_k_error(metrics, gamma, f"Errore sull'esponente k — {tag} (FrozenLake)", str(gdir / f"{tag}_k_error.png"))
-        plot_action_acc(act, f"Accuratezza azione — {tag} (FrozenLake, 4 azioni)", str(gdir / f"{tag}_accuracy.png"))
-        plot_mae_rmse_bucket(metrics, tag, gdir)
-        plot_confusion(act, f"Confusion matrix — {tag} (FrozenLake)", str(gdir / f"{tag}_confusion.png"))
+        plot_scatter(df_val, metrics, f"v_true vs v_llm — {stag}", str(gdir / f"{tag}_scatter.png"))
+        plot_residuals(df_val, metrics, f"Residui v_llm − v_true — {stag}", str(gdir / f"{tag}_residuals.png"))
+        ok_k = plot_k_error(metrics, gamma, f"Errore sull'esponente k — {stag}", str(gdir / f"{tag}_k_error.png"))
+        plot_action_acc(act, f"Accuratezza azione — {stag}", str(gdir / f"{tag}_accuracy.png"))
+        plot_mae_rmse_bucket(metrics, tag, gdir, title_tag=stag)
+        plot_confusion(act, f"Confusion matrix — {stag}", str(gdir / f"{tag}_confusion.png"))
 
         # ---- log ----
         log_lines.append("\n" + "-" * 70)

@@ -5,7 +5,7 @@ Q-learning tabulare su FrozenLake slippery per bucket iniziale/intermedio/avanza
 - Train su env gymnasium reale (stocastico slippery) con epsilon greedy
 - Bucket per SR window 100: iniziale 0-0.33, intermedio 0.33-0.8, avanzato 0.8-1.0
 - Max 100 stati unici per bucket (random sample finale per varietà)
-- Cache pickle/json analogo a qlearning_states.py
+- Cache json analoga a qlearning_states.py
 
 Uso:
     python -m graph.frozenlake_qlearning_states --map 8x8 --seed 1337
@@ -13,7 +13,7 @@ Uso:
 """
 
 from __future__ import annotations
-import argparse, json, pickle, random, sys
+import argparse, json, random, sys
 from collections import deque, defaultdict
 from pathlib import Path
 
@@ -25,6 +25,7 @@ if str(_SRC) not in sys.path:
 import numpy as np
 import gymnasium as gym
 from graph.frozenlake_mdp_graph import get_paths as get_mdp_paths, load_or_build
+from paths import CACHE_DIR
 
 BUCKETS = ["iniziale", "intermedio", "avanzato"]
 BOTTLENECK_LABEL = "bottleneck"
@@ -140,15 +141,14 @@ class QLearningAgent:
 
 def get_qstates_paths(
     map_name=DEFAULT_MAP, is_slippery=True, seed=1337, out_dir: Path | str | None = None
-):
+) -> Path:
     if out_dir is None:
-        out_dir = Path(__file__).parent / "data"
+        out_dir = CACHE_DIR
     else:
         out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     slip = "slippery" if is_slippery else "deterministic"
-    base = f"frozenlake_qstates_{map_name}_{slip}_seed{seed}"
-    return out_dir / f"{base}.pkl", out_dir / f"{base}.json"
+    return out_dir / f"frozenlake_qstates_{map_name}_{slip}_seed{seed}.json"
 
 
 def _to_jsonable(data: dict) -> dict:
@@ -170,18 +170,15 @@ def _to_jsonable(data: dict) -> dict:
     }
 
 
-def save_qstates(data: dict, pkl_path: Path, json_path: Path):
-    pkl_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(pkl_path, "wb") as f:
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-    j = _to_jsonable(data)
+def save_qstates(data: dict, json_path: Path):
+    json_path.parent.mkdir(parents=True, exist_ok=True)
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(j, f, indent=2, ensure_ascii=False)
+        json.dump(_to_jsonable(data), f, indent=2, ensure_ascii=False)
 
 
-def load_qstates(pkl_path: Path) -> dict:
-    with open(pkl_path, "rb") as f:
-        return pickle.load(f)
+def load_qstates(json_path: Path) -> dict:
+    with open(json_path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def _hparams_for(map_name, is_slippery):
@@ -420,11 +417,11 @@ def train_until_convergence(
             f"Warning max_episodes {max_episodes} sr={float(np.mean(sr_window)):.3f} (slippery: SR ottimo <0.6 su 8x8, target {target_sr})"
         )
     # ensure mdp exists for graph_ref (già caricato)
-    mdp_pkl, _ = get_mdp_paths(
+    mdp_json = get_mdp_paths(
         map_name,
         is_slippery,
         seed,
-        out_dir if out_dir else Path(__file__).parent / "data",
+        out_dir if out_dir else CACHE_DIR,
     )
     # fallback legacy senza seed già gestito in get_paths, ma garantisci esistenza
     rng = random.Random(seed)
@@ -492,7 +489,7 @@ def train_until_convergence(
         "thresholds": THRESHOLDS,
         "bucket_labels": BUCKETS + [BOTTLENECK_LABEL],
         "buckets": buckets_list,
-        "graph_ref": str(mdp_pkl),
+        "graph_ref": str(mdp_json),
         "visited_unique_total": int(visited_total),
     }
     return data
@@ -501,18 +498,17 @@ def train_until_convergence(
 def load_or_train(
     map_name=DEFAULT_MAP, is_slippery=True, seed=1337, out_dir=None, force=False, **kw
 ) -> dict:
-    pkl_path, json_path = get_qstates_paths(map_name, is_slippery, seed, out_dir)
-    if pkl_path.exists() and not force:
-        print(f"[cache] carico {pkl_path}")
-        return load_qstates(pkl_path)
+    json_path = get_qstates_paths(map_name, is_slippery, seed, out_dir)
+    if json_path.exists() and not force:
+        print(f"[cache] carico {json_path}")
+        return load_qstates(json_path)
     print(
-        f"[train] FrozenLake Q states {map_name} slippery={is_slippery} seed={seed} -> {pkl_path}"
+        f"[train] FrozenLake Q states {map_name} slippery={is_slippery} seed={seed} -> {json_path}"
     )
     data = train_until_convergence(
         seed=seed, map_name=map_name, is_slippery=is_slippery, out_dir=out_dir, **kw
     )
-    save_qstates(data, pkl_path, json_path)
-    print(f"  salvato pkl: {pkl_path} ({pkl_path.stat().st_size/1024:.1f} KB)")
+    save_qstates(data, json_path)
     print(f"  salvato json: {json_path} ({json_path.stat().st_size/1024:.1f} KB)")
     print(
         f"  buckets: " + ", ".join(f"{k}={len(v)}" for k, v in data["buckets"].items())

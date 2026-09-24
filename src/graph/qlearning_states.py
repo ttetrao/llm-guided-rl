@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import pickle
 import random
 import sys
 from collections import defaultdict, deque
@@ -34,6 +33,7 @@ if str(_SRC) not in sys.path:
 
 import numpy as np
 from graph.mdp_graph import ACTIONS_ALL, load_or_build, get_paths as get_mdp_paths
+from paths import CACHE_DIR
 
 # ---------------------------------------------------------------------------
 # Costanti / bucket per fase di apprendimento (nomi adatti a contesto universitario)
@@ -93,14 +93,13 @@ class QLearningAgent:
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
 
-def get_qstates_paths(seed: int = DEFAULT_SEED, size: int = DEFAULT_SIZE, out_dir: Path | str | None = None):
+def get_qstates_paths(seed: int = DEFAULT_SEED, size: int = DEFAULT_SIZE, out_dir: Path | str | None = None) -> Path:
     if out_dir is None:
-        out_dir = Path(__file__).parent / "data"
+        out_dir = CACHE_DIR
     else:
         out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    base = f"qlearning_states_{size}x{size}_seed{seed}"
-    return out_dir / f"{base}.pkl", out_dir / f"{base}.json"
+    return out_dir / f"qlearning_states_{size}x{size}_seed{seed}.json"
 
 
 def _to_jsonable_qstates(data: dict) -> dict:
@@ -135,18 +134,15 @@ def _to_jsonable_qstates(data: dict) -> dict:
     return out
 
 
-def save_qstates(data: dict, pkl_path: Path, json_path: Path):
-    pkl_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(pkl_path, "wb") as f:
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-    j = _to_jsonable_qstates(data)
+def save_qstates(data: dict, json_path: Path):
+    json_path.parent.mkdir(parents=True, exist_ok=True)
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(j, f, indent=2, ensure_ascii=False)
+        json.dump(_to_jsonable_qstates(data), f, indent=2, ensure_ascii=False)
 
 
-def load_qstates(pkl_path: Path) -> dict:
-    with open(pkl_path, "rb") as f:
-        return pickle.load(f)
+def load_qstates(json_path: Path) -> dict:
+    with open(json_path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def train_until_convergence(
@@ -333,7 +329,7 @@ def train_until_convergence(
         print(f"[bucket {k}] visitati={len(buckets_all[k])} critical_calpestati={critical_counts[k]} -> sampled {len(buckets_list[k])}/{N} (crit garantiti {min(critical_counts[k], len(buckets_list[k]))}){' [significant_only]' if significant_only else ''}")
     visited_unique_total = len(set().union(*[set(v) for v in buckets_list.values()])) if any(buckets_list.values()) else 0
 
-    pkl_ref, _ = get_mdp_paths(seed, size, out_dir if out_dir else Path(__file__).parent / "data")
+    json_ref = get_mdp_paths(seed, size, out_dir if out_dir else CACHE_DIR)
     data = {
         "seed": seed,
         "size": size,
@@ -350,7 +346,7 @@ def train_until_convergence(
         "buckets_all_counts": {k: len(v) for k, v in buckets_all.items()},
         "critical_counts": critical_counts,
         "critical_ids": {k: sorted(list(critical_all[k] & buckets_all[k])) for k in BUCKETS},
-        "graph_ref": str(pkl_ref),
+        "graph_ref": str(json_ref),
         "visited_unique_total": visited_unique_total,
     }
     return data
@@ -367,14 +363,13 @@ def load_or_train(
     Se file snapshot esiste e non force, carica; altrimenti train e salva.
     Ritorna dict con buckets iniziale/intermedio/avanzato (node_id).
     """
-    pkl_path, json_path = get_qstates_paths(seed, size, out_dir)
-    if pkl_path.exists() and not force:
-        print(f"[cache] carico {pkl_path}")
-        return load_qstates(pkl_path)
-    print(f"[train] Q-learning seed={seed} size={size} -> {pkl_path}")
+    json_path = get_qstates_paths(seed, size, out_dir)
+    if json_path.exists() and not force:
+        print(f"[cache] carico {json_path}")
+        return load_qstates(json_path)
+    print(f"[train] Q-learning seed={seed} size={size} -> {json_path}")
     data = train_until_convergence(seed=seed, size=size, out_dir=out_dir, **train_kwargs)
-    save_qstates(data, pkl_path, json_path)
-    print(f"  salvato pkl: {pkl_path} ({pkl_path.stat().st_size/1024:.1f} KB)")
+    save_qstates(data, json_path)
     print(f"  salvato json: {json_path} ({json_path.stat().st_size/1024:.1f} KB)")
     print(f"  buckets: " + ", ".join(f"{k}={len(v)}" for k, v in data['buckets'].items()))
     return data
@@ -422,9 +417,9 @@ def main():
             assert set(data["buckets"][k]).issubset(set(data.get("critical_ids", {}).get(k, []))), f"significant_only ma bucket {k} ha non-critici"
     # verifica che node_id esistano nel grafo
     from graph.mdp_graph import load_mdp
-    mdp_pkl, _ = get_mdp_paths(args.seed, args.size)
-    if mdp_pkl.exists():
-        mdp = load_mdp(mdp_pkl)
+    mdp_json = get_mdp_paths(args.seed, args.size)
+    if mdp_json.exists():
+        mdp = load_mdp(mdp_json)
         max_id = len(mdp["nodes"]) - 1
         for k, lst in data["buckets"].items():
             for nid in lst:

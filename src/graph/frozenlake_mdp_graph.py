@@ -6,7 +6,7 @@ MDP stocastico per FrozenLake slippery (is_slippery=True).
 - Estrae P da gymnasium FrozenLake-v1 env.P[s][a] -> [(prob, ns, reward, done)]
 - Value iteration stocastica: V*(s)=max_a sum_p p*[r+ gamma V*(s')]
 - Mappa ASCII per nodo con A su s corrente, S/H/G/F statici (come view_wrapper)
-- Salva pickle + json, cache per map_name/desc
+- Salva/carica solo json (niente pickle), cache per map_name/desc
 
 Uso:
     python -m graph.frozenlake_mdp_graph --map 8x8 --seed 1337
@@ -14,7 +14,7 @@ Uso:
     python -m graph.frozenlake_mdp_graph --map 8x8 --seed 42  # mappa random seedata (se desc custom)
 """
 from __future__ import annotations
-import argparse, json, pickle, sys
+import argparse, json, sys
 from pathlib import Path
 _THIS = Path(__file__).resolve()
 _SRC = _THIS.parents[1]
@@ -23,6 +23,7 @@ if str(_SRC) not in sys.path:
 
 import gymnasium as gym
 from env.frozenlake_view_wrapper import FrozenLakeViewSystem
+from paths import CACHE_DIR
 
 GAMMA = 0.99
 ACTION_NAMES = {0: "left", 1: "down", 2: "right", 3: "up"}
@@ -199,22 +200,21 @@ def build_mdp(seed=1337, map_name="8x8", is_slippery=True, desc=None, gamma=GAMM
         "holes": list(holes),
         "desc": [ "".join(desc_arr[rr, cc].decode() if hasattr(desc_arr[rr, cc], "decode") else str(desc_arr[rr][cc]) for cc in range(ncol)) for rr in range(nrow) ],
         "nodes": nodes,
-        "P": P,  # keep for quick access (not json serializable fully, but pickle ok)
+        "P": P,  # accesso rapido in-memoria (ricostruito dai nodi al load json)
         "V": V,
         "Q": Q,
         "action_names": ACTION_NAMES,
         "is_slippery_desc": f"is_slippery={is_slippery} success_rate=1/3" if is_slippery else "deterministic",
     }
 
-def get_paths(map_name="8x8", is_slippery=True, seed=1337, out_dir: Path | str | None = None):
+def get_paths(map_name="8x8", is_slippery=True, seed=1337, out_dir: Path | str | None = None) -> Path:
     if out_dir is None:
-        out_dir = Path(__file__).parent / "data"
+        out_dir = CACHE_DIR
     else:
         out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     slip = "slippery" if is_slippery else "deterministic"
-    base = f"frozenlake_mdp_{map_name}_{slip}_seed{seed}"
-    return out_dir / f"{base}.pkl", out_dir / f"{base}.json"
+    return out_dir / f"frozenlake_mdp_{map_name}_{slip}_seed{seed}.json"
 
 def _to_jsonable(mdp: dict) -> dict:
     nodes_j = []
@@ -238,35 +238,81 @@ def _to_jsonable(mdp: dict) -> dict:
         "action_names": {str(int(k)): v for k, v in mdp["action_names"].items()},
     }
 
-def save_mdp(mdp: dict, pkl_path: Path, json_path: Path):
-    pkl_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(pkl_path, "wb") as f:
-        pickle.dump(mdp, f, protocol=pickle.HIGHEST_PROTOCOL)
-    j = _to_jsonable(mdp)
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(j, f, indent=2, ensure_ascii=False)
+def _from_jsonable(j: dict) -> dict:
+    """Ricostruisce i tipi nativi (chiavi int, tuple) + P/V/Q derivati dai nodi."""
+    gamma = float(j.get("gamma", GAMMA))
+    nodes = []
+    for n in j["nodes"]:
+        trans = {}
+        for a, lst in n["transitions"].items():
+            trans[int(a)] = [{
+                "prob": float(t["prob"]),
+                "next_id": int(t["next_id"]),
+                "reward": float(t["reward"]),
+                "done": bool(t["done"]),
+            } for t in lst]
+        nodes.append({
+            "id": int(n["id"]), "state": int(n["state"]),
+            "r": int(n["r"]), "c": int(n["c"]),
+            "ch": n["ch"], "is_hole": bool(n["is_hole"]),
+            "is_goal": bool(n["is_goal"]),
+            "is_terminal": bool(n["is_terminal"]),
+            "map": n["map"], "v_value": float(n["v_value"]),
+            "transitions": trans,
+        })
+    # P/V/Q ricostruiti dai nodi (il json salva solo nodi + meta)
+    P: dict = {}
+    V: dict = {}
+    Q: dict = {}
+    for n in nodes:
+        s = int(n["id"])
+        V[s] = float(n["v_value"])
+        P[s] = {}
+        for a, lst in n["transitions"].items():
+            P[s][int(a)] = [(float(t["prob"]), int(t["next_id"]),
+                             float(t["reward"]), bool(t["done"])) for t in lst]
+            Q[(s, int(a))] = float(sum(
+                float(t["prob"]) * (float(t["reward"])
+                    + (0.0 if t["done"] else gamma * float(nodes[int(t["next_id"])]["v_value"])))
+                for t in lst))
+    return {
+        "seed": int(j.get("seed", 1337)),
+        "map_name": j["map_name"], "is_slippery": bool(j["is_slippery"]),
+        "gamma": gamma,
+        "nrow": int(j["nrow"]), "ncol": int(j["ncol"]),
+        "nS": int(j["nS"]), "nA": int(j["nA"]),
+        "start_pos": tuple(j["start_pos"]), "goal_pos": tuple(j["goal_pos"]),
+        "holes": [tuple(x) for x in j["holes"]], "desc": j["desc"],
+        "nodes": nodes,
+        "P": P, "V": V, "Q": Q,
+        "action_names": {int(k): v for k, v in j["action_names"].items()},
+        "is_slippery_desc": f"is_slippery={bool(j['is_slippery'])} success_rate=1/3" if j["is_slippery"] else "deterministic",
+    }
 
-def load_mdp(pkl_path: Path) -> dict:
-    with open(pkl_path, "rb") as f:
-        return pickle.load(f)
+def save_mdp(mdp: dict, json_path: Path):
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(_to_jsonable(mdp), f, indent=2, ensure_ascii=False)
+
+def load_mdp(json_path: Path) -> dict:
+    with open(json_path, encoding="utf-8") as f:
+        return _from_jsonable(json.load(f))
 
 def load_or_build(seed=1337, map_name="8x8", is_slippery=True, desc=None, out_dir: Path | str | None = None, force=False, gamma=GAMMA) -> dict:
-    pkl_path, json_path = get_paths(map_name, is_slippery, seed, out_dir)
+    json_path = get_paths(map_name, is_slippery, seed, out_dir)
     # fallback vecchio file senza seed per retrocompat
-    if not pkl_path.exists() and not force:
-        old_pkl, _ = get_paths(map_name, is_slippery, seed=1337, out_dir=out_dir)
+    if not json_path.exists() and not force:
         # check legacy without seed
-        legacy = Path(__file__).parent / "data" / f"frozenlake_mdp_{map_name}_{'slippery' if is_slippery else 'deterministic'}.pkl"
+        legacy = CACHE_DIR / f"frozenlake_mdp_{map_name}_{'slippery' if is_slippery else 'deterministic'}.json"
         if legacy.exists() and seed == 1337:
             print(f"[cache legacy] carico {legacy}")
             return load_mdp(legacy)
-    if pkl_path.exists() and not force:
-        print(f"[cache] carico {pkl_path}")
-        return load_mdp(pkl_path)
-    print(f"[build] FrozenLake MDP {map_name} slippery={is_slippery} seed={seed} -> {pkl_path}")
+    if json_path.exists() and not force:
+        print(f"[cache] carico {json_path}")
+        return load_mdp(json_path)
+    print(f"[build] FrozenLake MDP {map_name} slippery={is_slippery} seed={seed} -> {json_path}")
     mdp = build_mdp(seed=seed, map_name=map_name, is_slippery=is_slippery, desc=desc, gamma=gamma)
-    save_mdp(mdp, pkl_path, json_path)
-    print(f"  salvato pkl: {pkl_path} ({pkl_path.stat().st_size/1024:.1f} KB)")
+    save_mdp(mdp, json_path)
     print(f"  salvato json: {json_path} ({json_path.stat().st_size/1024:.1f} KB)")
     print(f"  nodi: {len(mdp['nodes'])} holes:{len(mdp['holes'])} V(start)={mdp['nodes'][0]['v_value']}")
     return mdp

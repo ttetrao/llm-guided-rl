@@ -5,13 +5,9 @@ __pycache__/
 # run artifacts
 **/wandb/
 **/videos/
-*.pkl
 
-# thesis generated data (rigenerabili, fuori da git)
-src/graph/data/
-src/evaluate/output/
-src/evaluate/output_frozenlake/
-src/evaluate/training result/
+# generated outputs (rigenerabili, fuori da git; vedi src/paths.py)
+src/output/
 
 # latex build
 *.aux

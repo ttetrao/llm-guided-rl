@@ -29,6 +29,7 @@ This environment has a key that the agent must pick up in order to unlock a door
 | 6   | done    | Unused                    |
 
 be careful: to pickup the key you need to use the action "pickup" in an adjacent position while facing the key.
+IMPORTANT: forward don't make the agent acquire the key.
 
 ## Observation Encoding
 
@@ -38,8 +39,8 @@ be careful: to pickup the key you need to use the action "pickup" in an adjacent
 
 ## Rewards
 
-Original MiniGrid: `R = 1 - 0.9*(step_count / max_steps)` on goal, `0` otherwise.
-In our deterministic normalized MDP for \(V_*\) we use `r=1` exactly when the next state is the goal and `0` otherwise (with \(\gamma=0.99\)), so \(V_*(s)\in[0,1]\) and the definition \(v_*(s)=\mathbb{E}[G_t\mid S_t=s]\) holds without step scaling.
+Ambiente originale MiniGrid: `R = 1 - 0.9*(step_count / max_steps)` su goal, `0` altrimenti.
+Nel nostro MDP deterministico normalizzato per \(V*\*\) si usa `r=1` esattamente quando lo stato successivo è il goal e `0` altrimenti (con \(\gamma=0.99\)), così \(V*\_(s)\in[0,1]\) e la definizione \(v\_\_(s)=\mathbb{E}[G_t\mid S_t=s]\) resta valida senza scalamento per step.
 
 ## Termination
 

@@ -10,11 +10,11 @@ Costruisce (o carica da cache) il grafo completo dell'MDP `MiniGrid-DoorKey-{siz
 ```
 graph/
   mdp_graph.py   # build + render + save/load
-  data/          # cache: mdp_{size}x{size}_seed{SEED}.pkl + .json
-  __init__.py
+  ...
+cache in ../output/cache/: mdp_{size}x{size}_seed{SEED}.json  (path da src/paths.py)
 ```
 
-Seed nel nome file (es. `mdp_8x8_seed42.pkl`).
+Seed nel nome file (es. `mdp_8x8_seed42.json`).
 
 ## Uso CLI
 
@@ -84,8 +84,7 @@ Stage: find_key / open_door / reach_goal
 
 ## Cache
 
-* `mdp_{size}x{size}_seed{seed}.pkl` — pickle veloce (load <50ms su 8x8)
-* `mdp_{size}x{size}_seed{seed}.json` — human-readable, tuple→list, walls→sorted list
+* `mdp_{size}x{size}_seed{seed}.json` — cache unica (human-readable, tuple→list, walls→sorted list; tipi nativi ricostruiti al load)
 
 `load_or_build(..., force=True)` rigenera.
 

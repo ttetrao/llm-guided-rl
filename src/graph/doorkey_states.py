@@ -19,7 +19,7 @@ Sostituisce l'approccio a bucket di qlearning_states.py (iniziale/intermedio/ava
   (decine di nodi) e resto ripartito tra checkpoint in proporzione alle
   dimensioni (largest remainder, seeded). Se somma <= N, tutto.
 
-Output pkl+json con stessa struttura di qlearning_states (dict "buckets"), quindi
+Output json con stessa struttura di qlearning_states (dict "buckets"), quindi
 query_gemma.py lo legge cambiando solo BUCKETS_WANTED nelle nuove etichette
 (senza "_" per compatibilita' col parsing del code seed_nid_bucket):
   ["bottleneck", "ckpt-0.3", "ckpt-0.5", "ckpt-0.7", "ckpt-0.8", "ckpt-1"]
@@ -40,7 +40,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import pickle
 import random
 import sys
 from collections import deque
@@ -54,6 +53,7 @@ if str(_SRC) not in sys.path:
 import numpy as np
 from graph.mdp_graph import DIRS, load_or_build, get_paths as get_mdp_paths
 from graph.qlearning_states import QLearningAgent
+from paths import CACHE_DIR
 
 DEFAULT_SEED = 1337
 DEFAULT_SIZE = 8
@@ -70,14 +70,13 @@ def _ckpt_label(t: float) -> str:
 
 
 def get_states_paths(seed: int = DEFAULT_SEED, size: int = DEFAULT_SIZE,
-                      out_dir: Path | str | None = None):
+                      out_dir: Path | str | None = None) -> Path:
     if out_dir is None:
-        out_dir = Path(__file__).parent / "data"
+        out_dir = CACHE_DIR
     else:
         out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    base = f"doorkey_states_{size}x{size}_seed{seed}"
-    return out_dir / f"{base}.pkl", out_dir / f"{base}.json"
+    return out_dir / f"doorkey_states_{size}x{size}_seed{seed}.json"
 
 
 def extract_bottleneck(mdp: dict) -> dict[str, list[int]]:
@@ -267,17 +266,15 @@ def _to_jsonable(data: dict) -> dict:
     }
 
 
-def save_states(data: dict, pkl_path: Path, json_path: Path):
-    pkl_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(pkl_path, "wb") as f:
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+def save_states(data: dict, json_path: Path):
+    json_path.parent.mkdir(parents=True, exist_ok=True)
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(_to_jsonable(data), f, indent=2, ensure_ascii=False)
 
 
-def load_states(pkl_path: Path) -> dict:
-    with open(pkl_path, "rb") as f:
-        return pickle.load(f)
+def load_states(json_path: Path) -> dict:
+    with open(json_path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def extract(seed: int = DEFAULT_SEED, size: int = DEFAULT_SIZE, gamma: float = GAMMA,
@@ -295,7 +292,7 @@ def extract(seed: int = DEFAULT_SEED, size: int = DEFAULT_SIZE, gamma: float = G
     pools_all.update(pilot["pools"])
     buckets = allocate(pools_all, total, random.Random(seed))
     labels = [BOTTLENECK_LABEL] + [_ckpt_label(t) for t in thresholds]
-    pkl_ref, _ = get_mdp_paths(seed, size, out_dir if out_dir else Path(__file__).parent / "data")
+    json_ref = get_mdp_paths(seed, size, out_dir if out_dir else CACHE_DIR)
     return {
         "seed": seed, "size": size, "gamma": gamma, "method": "bottleneck+ckpt-pilot",
         "hparams": pilot["hparams"], "total_episodes": pilot["total_episodes"],
@@ -308,7 +305,7 @@ def extract(seed: int = DEFAULT_SEED, size: int = DEFAULT_SIZE, gamma: float = G
         "bottleneck_ids": bottleneck_ids,
         "ckpt_episodes": pilot["ckpt_episodes"], "ckpt_sr": pilot["ckpt_sr"],
         "ckpt_reached": pilot["ckpt_reached"], "total_requested": total,
-        "graph_ref": str(pkl_ref),
+        "graph_ref": str(json_ref),
         "visited_unique_total": len(set().union(*buckets.values())) if buckets else 0,
     }
 
@@ -316,29 +313,27 @@ def extract(seed: int = DEFAULT_SEED, size: int = DEFAULT_SIZE, gamma: float = G
 def load_or_extract(seed: int = DEFAULT_SEED, size: int = DEFAULT_SIZE,
                      out_dir: Path | str | None = None, force: bool = False,
                      **kwargs) -> dict:
-    pkl_path, json_path = get_states_paths(seed, size, out_dir)
-    if pkl_path.exists() and not force:
-        print(f"[cache] carico {pkl_path}")
-        return load_states(pkl_path)
-    print(f"[extract] bottleneck+ckpt seed={seed} size={size} -> {pkl_path}")
+    json_path = get_states_paths(seed, size, out_dir)
+    if json_path.exists() and not force:
+        print(f"[cache] carico {json_path}")
+        return load_states(json_path)
+    print(f"[extract] bottleneck+ckpt seed={seed} size={size} -> {json_path}")
     data = extract(seed=seed, size=size, out_dir=out_dir, **kwargs)
-    save_states(data, pkl_path, json_path)
-    print(f"  salvato pkl: {pkl_path} ({pkl_path.stat().st_size/1024:.1f} KB)")
+    save_states(data, json_path)
     print(f"  salvato json: {json_path} ({json_path.stat().st_size/1024:.1f} KB)")
     print(f"  buckets: " + ", ".join(f"{k}={len(v)}" for k, v in data["buckets"].items()))
     return data
 
 
 def get_states_multi_paths(seeds: list[int], size: int = DEFAULT_SIZE,
-                           out_dir: Path | str | None = None):
+                           out_dir: Path | str | None = None) -> Path:
     if out_dir is None:
-        out_dir = Path(__file__).parent / "data"
+        out_dir = CACHE_DIR
     else:
         out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     tag = "-".join(str(int(s)) for s in sorted(set(seeds)))
-    base = f"doorkey_states_{size}x{size}_seeds{tag}"
-    return out_dir / f"{base}.pkl", out_dir / f"{base}.json"
+    return out_dir / f"doorkey_states_{size}x{size}_seeds{tag}.json"
 
 
 def _to_jsonable_multi(data: dict) -> dict:
@@ -352,17 +347,15 @@ def _to_jsonable_multi(data: dict) -> dict:
     }
 
 
-def save_states_multi(data: dict, pkl_path: Path, json_path: Path):
-    pkl_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(pkl_path, "wb") as f:
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+def save_states_multi(data: dict, json_path: Path):
+    json_path.parent.mkdir(parents=True, exist_ok=True)
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(_to_jsonable_multi(data), f, indent=2, ensure_ascii=False)
 
 
-def load_states_multi(pkl_path: Path) -> dict:
-    with open(pkl_path, "rb") as f:
-        data = pickle.load(f)
+def load_states_multi(json_path: Path) -> dict:
+    with open(json_path, encoding="utf-8") as f:
+        data = json.load(f)
     if "per_seed" in data:  # normalizza chiavi str (da JSON) -> int
         data["per_seed"] = {int(k): v for k, v in data["per_seed"].items()}
         data["seeds"] = [int(s) for s in data["seeds"]]
@@ -375,18 +368,17 @@ def load_or_extract_multi(seeds: list[int], size: int = DEFAULT_SIZE,
     """Estrae (o riusa cache singola) per ogni seed; --total resta per-seed."""
     seeds = sorted(set(int(s) for s in seeds))
     assert seeds, "servono >=1 seed"
-    pkl_path, json_path = get_states_multi_paths(seeds, size, out_dir)
-    if pkl_path.exists() and not force:
-        print(f"[cache] carico {pkl_path}")
-        return load_states_multi(pkl_path)
+    json_path = get_states_multi_paths(seeds, size, out_dir)
+    if json_path.exists() and not force:
+        print(f"[cache] carico {json_path}")
+        return load_states_multi(json_path)
     per_seed = {s: load_or_extract(seed=s, size=size, out_dir=out_dir,
                                   force=force, **kwargs) for s in seeds}
     # ponytail: seeds per prima -> in cima al file
     data = {"seeds": seeds, "size": size,
             "total_per_seed": kwargs.get("total", 100),
             "per_seed": per_seed}
-    save_states_multi(data, pkl_path, json_path)
-    print(f"  salvato pkl: {pkl_path} ({pkl_path.stat().st_size/1024:.1f} KB)")
+    save_states_multi(data, json_path)
     print(f"  salvato json: {json_path} ({json_path.stat().st_size/1024:.1f} KB)")
     for s, d in per_seed.items():
         print(f"  seed {s}: " + ", ".join(f"{k}={len(v)}" for k, v in d["buckets"].items()))
@@ -417,7 +409,7 @@ def main():
     p.add_argument("--max-episodes", type=int, default=10000, dest="max_episodes")
     p.add_argument("--window", type=int, default=100, help="finestra SR (default 100)")
     p.add_argument("--eval-every", type=int, default=50, dest="eval_every")
-    p.add_argument("--out", type=str, default=None, help="cartella output (default graph/data)")
+    p.add_argument("--out", type=str, default=None, help="cartella output (default src/output/cache)")
     p.add_argument("--force", action="store_true", help="rigenera anche se esiste")
     p.add_argument("--show", type=int, default=0, help="stampa N mappe campione")
     args = p.parse_args()

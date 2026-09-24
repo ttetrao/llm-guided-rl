@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
+"""Utilità condivise q-learning DoorKey: encode + costanti + resolve_input + plot.
+
+Modulo neutro (niente torch): importato dagli agenti qtable.
+"""
 import csv
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -7,13 +12,48 @@ import numpy as np
 
 from env.view_wrapper import Stage
 
-STAGE_IDX = {Stage.FIND_KEY: 0, Stage.OPEN_DOOR: 1, Stage.REACH_GOAL: 2, Stage.ERROR: 2}
+_THIS = Path(__file__).resolve()
+_SRC = _THIS.parents[1]
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+from paths import AGENTS_DIR, LLM_DIR  # noqa: E402
+
+STAGE_BY_ENUM = {Stage.FIND_KEY: 0, Stage.OPEN_DOOR: 1, Stage.REACH_GOAL: 2, Stage.ERROR: 2}
 EVENT_STAGE = {"find_key": 0, "open_door": 1, "reach_goal": 2}
+
+# chiavi stringa (righe JSON LLM), usate dagli agenti qtable
+ACTION_IDX = {"left": 0, "right": 1, "forward": 2, "pickup": 3, "drop": 4, "toggle": 5}
+STAGE_IDX = {"find_key": 0, "open_door": 1, "reach_goal": 2}
+STAGE_TARGET = {"find_key": "key_pos", "open_door": "door_pos", "reach_goal": "goal_pos"}
+
+
+def resolve_input(name_or_path):
+    """Risolve il JSON di risultati LLM (default: unico llm_results*.json in LLM_DIR)."""
+    p = Path(name_or_path) if name_or_path else None
+    if p is None:
+        cands = sorted(LLM_DIR.glob("llm_results*.json"))
+        assert cands, f"nessun llm_results*.json in {LLM_DIR}"
+        if len(cands) == 1:
+            return cands[0]
+        if not sys.stdin.isatty():
+            print(f"--input omesso: uso {cands[0].name}")
+            return cands[0]
+        print("Seleziona il file input:")
+        for i, c in enumerate(cands):
+            print(f"  [{i}] {c.name}")
+        return cands[int(input("numero: ").strip())]
+    if not p.is_absolute():
+        for q in (p, LLM_DIR / p, LLM_DIR / p.name):
+            if q.exists():
+                return q
+        assert False, f"file non trovato: {p}"
+    assert p.exists(), f"file non trovato: {p}"
+    return p
 
 
 def encode(env):
     stage = env.get_wrapper_attr("curr_stage")
-    stage_idx = STAGE_IDX.get(stage, 2)
+    stage_idx = STAGE_BY_ENUM.get(stage, 2)
     if stage == Stage.FIND_KEY:
         t = env.get_wrapper_attr("key_pos")
     elif stage == Stage.OPEN_DOOR:
@@ -115,7 +155,8 @@ def plot_compare(hist_v, hist_a, eval_v, eval_a, out_name="ddqn_compare.png", wi
                  bbox=dict(boxstyle="round", fc="white", alpha=0.8))
     fig.suptitle("Confronto Vanilla vs Augmented (v_llm shaping)")
     plt.tight_layout()
-    out = Path(__file__).parent.parent / out_name
+    out = AGENTS_DIR / out_name
+    AGENTS_DIR.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=150)
     print(f"Plot salvato: {out}")
     plt.close(fig)

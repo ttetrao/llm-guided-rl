@@ -1,0 +1,8 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {figure}{\numberline {1}{\ignorespaces Seed 1337: punti addensati sulla diagonale, quasi tutti nella fascia $\pm 0.05$.}}{6}{figure.1}%
+\contentsline {figure}{\numberline {2}{\ignorespaces Cinque seed, solo bottleneck: stessa diagonale, dispersione superiore.}}{7}{figure.2}%
+\contentsline {figure}{\numberline {3}{\ignorespaces Seed 1337: accuratezza e errore per gruppo. I bottleneck presentano l'errore maggiore.}}{7}{figure.3}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Cinque seed, solo bottleneck: Top-1 91.9\%, Top-2 96.4\%.}}{8}{figure.4}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Confronto a pari iperparametri: il controllo resta a tasso nullo.}}{8}{figure.5}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Multi-seed: il controllo resta a zero e sul seed nuovo non si osserva trasferimento.}}{10}{figure.6}%

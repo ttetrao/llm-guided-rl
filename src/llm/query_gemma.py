@@ -4,8 +4,8 @@ Interroga Gemini AI Studio (gemma-4-26b-a4b-it) usando i file generati in graph
 e il prompt in docs/doorkey/{it,en}/prompt.txt con placeholder sostituiti.
 
 - Sorgente stati: solo bucket 'iniziale' e 'avanzato' (0-0.33 e 0.8-1.0) da
-  qlearning_states_8x8_seed1337.pkl (max 100 per bucket, campionati random)
-  + grafo mdp_8x8_seed1337.pkl per mappe s e s'=T(s,a) esplicite
+  qlearning_states_8x8_seed1337.json (max 100 per bucket, campionati random)
+  + grafo mdp_8x8_seed1337.json per mappe s e s'=T(s,a) esplicite
 - Prompt: Q via V -> Q(s,a)=V*(s') con s' già in <left>..<toggle> (done ignorata, 6 s' per stato, drop=self-loop)
 - Batch: 1 stato per request per limiti dimensione, rate come bak/llm/gconnection.py (pacing 65s, retry, ThreadPool)
 - Output: file unico JSON con entrambi i bucket, una entry per (node,action) per leggibilità
@@ -45,8 +45,9 @@ except ImportError:
     GeminiLLM = None
     load_api_keys = lambda: None
 
-from graph.mdp_graph import load_or_build, get_paths as get_mdp_paths
+from graph.mdp_graph import load_or_build
 from graph.qlearning_states import get_qstates_paths, load_qstates
+from paths import LLM_DIR
 
 # ---------------------------------------------------------------------------
 # Config come gconnection.py — 1 stato per request per limiti dimensione
@@ -82,7 +83,7 @@ class ResultRow:
 
 def get_output_paths(seed: int, size: int, model_id: str = MODEL_ID, out_dir: Path | str | None = None):
     if out_dir is None:
-        out_dir = Path(__file__).parent.parent / "graph" / "data"
+        out_dir = LLM_DIR
     else:
         out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -94,9 +95,9 @@ _STATES_RE = re.compile(r"(?:qlearning_states|doorkey_states)_(\d+)x(\d+)_seed(\
 _STATES_MULTI_RE = re.compile(r"(?:qlearning_states|doorkey_states)_(\d+)x(\d+)_seeds([\d\-]+)$")
 
 def _resolve_states_path(states_path: Path | str, seed: int | None, size: int | None, model_id: str = MODEL_ID):
-    """--path: file .pkl stati (dir+nome). seed/size derivati dal nome salvo espliciti.
-    Supporta anche file multi-seed ..._seedsA-B-C.pkl (seed dal contenuto).
-    Ritorna (qstates_pkl, seed, size, out_json accanto all'input)."""
+    """--path: file .json stati (dir+nome). seed/size derivati dal nome salvo espliciti.
+    Supporta anche file multi-seed ..._seedsA-B-C.json (seed dal contenuto).
+    Ritorna (qstates_json, seed, size, out_json accanto all'input)."""
     p = Path(states_path)
     m = _STATES_RE.match(p.stem)
     mm = None if m else _STATES_MULTI_RE.match(p.stem)
@@ -324,11 +325,11 @@ def run(seed: int | None = DEFAULT_SEED, size: int | None = DEFAULT_SIZE, lang: 
     # 1. carica grafo e qstates (--path: file diretto, seed/size dal nome salvo espliciti)
     mdps: dict[int, dict] = {}
     if states_path is not None:
-        qstates_pkl, seed, size, out_json = _resolve_states_path(states_path, seed, size)
-        if not qstates_pkl.exists():
-            print(f"ERRORE: stati non trovato {qstates_pkl}.")
+        qstates_json, seed, size, out_json = _resolve_states_path(states_path, seed, size)
+        if not qstates_json.exists():
+            print(f"ERRORE: stati non trovato {qstates_json}.")
             return
-        qdata = load_qstates(qstates_pkl)
+        qdata = load_qstates(qstates_json)
         seeds, seed_buckets = _states_seed_buckets(qdata, seed)
         for s in seeds:
             mdps[s] = load_or_build(seed=s, size=size)
@@ -340,11 +341,11 @@ def run(seed: int | None = DEFAULT_SEED, size: int | None = DEFAULT_SIZE, lang: 
             size = DEFAULT_SIZE
         mdp = load_or_build(seed=seed, size=size)
         mdps[seed] = mdp
-        qstates_pkl, _ = get_qstates_paths(seed, size)
-        if not qstates_pkl.exists():
-            print(f"ERRORE: qstates non trovato {qstates_pkl}. Esegui prima graph.qlearning_states")
+        qstates_json = get_qstates_paths(seed, size)
+        if not qstates_json.exists():
+            print(f"ERRORE: qstates non trovato {qstates_json}. Esegui prima graph.qlearning_states")
             return
-        qdata = load_qstates(qstates_pkl)
+        qdata = load_qstates(qstates_json)
         seeds, seed_buckets = _states_seed_buckets(qdata, seed)
     # 2. seleziona stati dai bucket richiesti (--bucket: 1 solo, default tutti)
     wanted = [bucket] if bucket else list(BUCKETS_WANTED)
@@ -524,7 +525,7 @@ if __name__ == "__main__":
     parser.add_argument("--limit-per-bucket", type=int, default=None, dest="limit_per_bucket", help="numero per bucket per seed (es. 5)")
     parser.add_argument("--dry-run", action="store_true", help="non chiama API, solo verifica prompt")
     parser.add_argument("--force", action="store_true", help="ignora dedup e riprocessa tutto")
-    parser.add_argument("--path", type=str, default=None, dest="states_path", help="file .pkl stati (es. graph/data/doorkey_states_8x8_seed1337.pkl o ..._seeds1337-42.pkl); seed/size dal nome, output accanto")
+    parser.add_argument("--path", type=str, default=None, dest="states_path", help="file .json stati (es. src/output/cache/doorkey_states_8x8_seed1337.json o ..._seeds1337-42.json); seed/size dal nome, output accanto")
     args = parser.parse_args()
     # se --limit dato, ignora limit_per_bucket? No, limit totale prevale ma per semplicità li combiniamo già sopra
     run(seed=args.seed, size=args.size, lang=args.lang, limit=args.limit, limit_per_bucket=args.limit_per_bucket, dry_run=args.dry_run, force=args.force, states_path=args.states_path, bucket=args.bucket)

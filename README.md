@@ -1,6 +1,6 @@
 # Inizializzare l'apprendimento per rinforzo con stime di un LLM: il caso MiniGrid-DoorKey
 
-Appunti strutturati per la tesi. Il corpo (§1-§11) è sul caso MiniGrid-DoorKey; l'appendice §12 descrive l'architettura FrozenLake senza numeri (dati non versionati). Tutti i numeri DoorKey riportati sono misurati sui file in `src/graph/data/` e `src/evaluate/output/`; i riferimenti al codice indicano il file e la riga. Comandi da `src/`: `python3 -m graph.<modulo>`, `python3 -m llm.<modulo>`, `python3 -m evaluate.<modulo>`, `python3 -m agent.<modulo>`.
+Appunti strutturati per la tesi. Il corpo (§1-§11) è sul caso MiniGrid-DoorKey; l'appendice §12 descrive l'architettura FrozenLake senza numeri (dati non versionati). Tutti i numeri DoorKey riportati sono misurati sui file in `src/output/llm/` e `src/output/evaluate/`; i riferimenti al codice indicano il file e la riga. Comandi da `src/`: `python3 -m graph.<modulo>`, `python3 -m llm.<modulo>`, `python3 -m evaluate.<modulo>`, `python3 -m agent.<modulo>`.
 
 ## 1. Problema
 
@@ -74,7 +74,7 @@ Modelli interrogati: `gemma-4-26b-a4b-it` (28 stati, 168 righe: run parziale) e 
 
 ## 5. Qualità delle stime
 
-La valutazione (`src/evaluate/evaluate_llm.py`, esiti in `src/evaluate/output/log_valutazione.txt`) confronta `v_llm` con `v_true = V*(s')` su tre piani: valori (MAE, RMSE, Pearson, Spearman, CCC con intervalli bootstrap), selezione dell'azione (accuratezza tie-aware: la scelta è corretta se una qualsiasi delle azioni a pari merito quantizzate su `gamma^k` è ottima) e regret come metrica primaria.
+La valutazione (`src/evaluate/evaluate_llm.py`, esiti in `src/output/evaluate/log_valutazione.txt`) confronta `v_llm` con `v_true = V*(s')` su tre piani: valori (MAE, RMSE, Pearson, Spearman, CCC con intervalli bootstrap), selezione dell'azione (accuratezza tie-aware: la scelta è corretta se una qualsiasi delle azioni a pari merito quantizzate su `gamma^k` è ottima) e regret come metrica primaria.
 
 | modello | stati | MAE | Pearson r | Top-1 tie-aware | regret medio |
 |---|---|---|---|---|---|
@@ -130,8 +130,8 @@ Primo, copertura: 150 stati su 480 bastano per DoorKey 8x8 ma la frazione utile 
 - `src/graph/qlearning_states.py` — precedente approccio a bucket; resta come dipendenza (fornisce `QLearningAgent` al pilota).
 - `src/llm/query_gemma.py`, `query_gpt.py` — interrogazione dei modelli.
 - `src/docs/doorkey/{it,en}/` — prompt, legenda, definizioni di `v_*` e `q_*`.
-- `src/evaluate/evaluate_llm.py` — metriche su valori, azioni e regret; `evaluate/output/` contiene grafici e `log_valutazione.txt`.
-- `src/agent/doorkey_qtable_llminit.py`, `doorkey_state.py` — Q-learning con init da LLM; `doorkey_ddqn_pretrained.py`, `doorkey_ddqn.py`, `ExperienceReplayBuffer.py` — ramo DDQN. Comando dello sweep (sezione 6.1), da `src/`: `python3 -m agent.doorkey_qtable_llminit --input llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b.json --seed 1337 --episodes 1500 --eps_decay 0.99 --eps_min 0.05 --max_steps 450 --eval_episodes 100 --no_plot --alpha A --gamma G --tag sweep_aAgG`; gli esiti sono in `graph/data/qtable_llminit_seed_1337_sweep_*.json`.
+- `src/evaluate/evaluate_llm.py` — metriche su valori, azioni e regret; `src/output/evaluate/` contiene grafici e `log_valutazione.txt`.
+- `src/agent/doorkey_qtable_llminit.py`, `doorkey_state.py` — Q-learning con init da LLM (il ramo DDQN è stato rimosso). Comando dello sweep (sezione 6.1), da `src/`: `python3 -m agent.doorkey_qtable_llminit --input llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b.json --seed 1337 --episodes 1500 --eps_decay 0.99 --eps_min 0.05 --max_steps 450 --eval_episodes 100 --no_plot --alpha A --gamma G --tag sweep_aAgG`; gli esiti sono in `src/output/agents/qtable_llminit_seed_1337_sweep_*.json`.
 - `src/env/view_wrapper.py`, `doorkey_events.py` — stadi e osservazione.
 - FrozenLake (appendice §12): `src/graph/frozenlake_mdp_graph.py`, `frozenlake_qlearning_states.py`, `src/llm/query_frozenlake_{gpt,gemma}.py`, `src/evaluate/evaluate_frozenlake_llm.py`, `src/agent/frozenlake_qtable_llminit{,2}.py`, `frozenlake_state.py`, `src/env/frozenlake_{factory,view_wrapper}.py`, `src/docs/frozenlake/{it,en}/`.
 
@@ -153,9 +153,9 @@ Scartati dopo controllo del codice: Even-Dar e Mansour 2001 (init ottimistica �
 
 ## 12. Appendice FrozenLake (architettura, senza numeri)
 
-Stessa idea del corpo (Q-init da stime LLM) su `FrozenLake-v1` slippery, ambiente stocastico più piccolo e senza stadi. Nessun numero sotto: `src/graph/data/` e `src/evaluate/output_frozenlake/` non sono versionati, quindi si descrive solo la pipeline.
+Stessa idea del corpo (Q-init da stime LLM) su `FrozenLake-v1` slippery, ambiente stocastico più piccolo e senza stadi. Nessun numero sotto: `src/output/cache/` e `src/output/evaluate_frozenlake/` non sono versionati, quindi si descrive solo la pipeline.
 
-- MDP (`src/graph/frozenlake_mdp_graph.py`): `P[s][a]` da gymnasium con `success_rate=1/3` (voluta 1/3, perpendicolari 1/3+1/3), 64 stati su 8x8 / 16 su 4x4, stato = int `r*ncol+c`, 4 azioni (`left/down/right/up`), nessun muro. `V*` via value iteration stocastica `V*=max_a Σ p·[r+γV*]`, γ=0.99; `Q*(s,a)=Σ p·[r+γV*]` (0 su `done`). Cache `frozenlake_mdp_{map}_{slippery|deterministic}_seed{seed}.pkl/.json`.
+- MDP (`src/graph/frozenlake_mdp_graph.py`): `P[s][a]` da gymnasium con `success_rate=1/3` (voluta 1/3, perpendicolari 1/3+1/3), 64 stati su 8x8 / 16 su 4x4, stato = int `r*ncol+c`, 4 azioni (`left/down/right/up`), nessun muro. `V*` via value iteration stocastica `V*=max_a Σ p·[r+γV*]`, γ=0.99; `Q*(s,a)=Σ p·[r+γV*]` (0 su `done`). Cache `frozenlake_mdp_{map}_{slippery|deterministic}_seed{seed}.json`.
 - Selezione stati (`src/graph/frozenlake_qlearning_states.py`): train Q-learning sul grafo con sampling da `P` + bucket per SR a finestra (`iniziale` 0-0.33, `intermedio` 0.33-0.8, `avanzato` 0.8-1.0, max 100 per bucket); bottleneck strutturale `extract_bottleneck` solo non-terminali: `goal_entry` (transizioni a reward>0), `on_policy` (rollout greedy-ottimo campionato 1 ogni 2), `near_policy` (1-ring slip degli on-policy, max 10 F). Profili in `_hparams_for`: 8x8 slippery con `optimistic_init=True`, `alpha=0.1`, `eps_decay=0.9985`, `eps_min=0.2`, `max_steps=400`. Se `avanzato` resta <10 stati, fallback ai top-V* (non più traiettoria pura: stesso caveat di §9).
 - Prompt (`src/docs/frozenlake/{it,en}/prompt.txt`, `legend.txt`, `transition-model.md`, `q/v-function_definition.md`): Q* come media pesata sugli esiti già calcolati (`<expected>` + 2×`<alternative>` per azione), `p` lette in `<documentation>`, mai scritte nelle mappe; `V*(H)=0`, `V*(F)∈(0,1)`, vietata la scorciatoia Manhattan; output solo array JSON con `code` + `q-function-values` per le 4 azioni.
 - Query (`src/llm/query_frozenlake_gpt.py`, `query_frozenlake_gemma.py`): 1 stato/request, `BUCKETS_WANTED=["bottleneck"]`, envelope `{seeds,bucket,rows}` una riga per (stato,azione) con `v_true=Q*` stocastico, dedup su file; comandi da `src/`: `python3 -m llm.query_frozenlake_gpt --map 8x8 --seed 1337 --bucket bottleneck --dry-run`.

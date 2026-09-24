@@ -11,7 +11,7 @@ Mappa ASCII con V-true / V-llm + tipo casella, per DoorKey e FrozenLake.
 Uso:
     python -m graph.show_values_map --env doorkey --seed 1337
     python -m graph.show_values_map --env frozenlake --map 8x8 --seed 1337
-    python -m graph.show_values_map --env doorkey --llm graph/data/altro.json --force
+    python -m graph.show_values_map --env doorkey --llm src/output/llm/altro.json --force
 """
 from __future__ import annotations
 
@@ -25,6 +25,8 @@ _THIS = Path(__file__).resolve()
 _SRC = _THIS.parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
+
+from paths import LLM_DIR
 
 W = 9  # larghezza cella ("0.99/0.99" ci sta esatta)
 
@@ -82,7 +84,7 @@ def show_doorkey(seed: int, size: int, llm: str | None, force: bool):
     gi = mdp["grid_info"]
     w, h = gi["w"], gi["h"]
     walls = {(int(x), int(y)) for x, y in gi["walls"]}
-    pat = str(Path(__file__).parent / "data" / "llm_results_*.json")
+    pat = str(LLM_DIR / "llm_results_*.json")
     vllm = _vllm_by_state(_load_llm_rows(llm, pat, seed), "node_id")
 
     cells: list[list[tuple[str, str]]] = []
@@ -131,7 +133,7 @@ def show_frozenlake(map_name: str, seed: int, llm: str | None, force: bool):
 
     mdp = load_or_build(seed=seed, map_name=map_name, force=force)
     nrow, ncol = mdp["nrow"], mdp["ncol"]
-    pat = str(Path(__file__).parent / "data" / "frozenlake_llm_*.json")
+    pat = str(LLM_DIR / "frozenlake_llm_*.json")
     vllm = _vllm_by_state(_load_llm_rows(llm, pat, seed), "state")
 
     cells: list[list[tuple[str, str]]] = []
@@ -163,7 +165,7 @@ def main():
     p.add_argument("--seed", type=int, default=1337)
     p.add_argument("--size", type=int, default=8, help="solo doorkey")
     p.add_argument("--map", type=str, default="8x8", dest="map_name", help="solo frozenlake")
-    p.add_argument("--llm", type=str, default=None, help="JSON LLM (default: auto in graph/data)")
+    p.add_argument("--llm", type=str, default=None, help="JSON LLM (default: auto in src/output/llm)")
     p.add_argument("--force", action="store_true", help="rigenera il grafo MDP anche se in cache")
     a = p.parse_args()
     if a.env == "doorkey":

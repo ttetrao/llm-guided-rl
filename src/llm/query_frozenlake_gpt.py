@@ -4,9 +4,9 @@ Interroga gpt-oss:120b via Ollama (cloud) su FrozenLake slippery (MDP stocastico
 
 Clone di llm/query_gpt.py (plumbing Ollama) con logica FrozenLake da
 stash llm/query_frozenlake.py, solo mode q:
-- Sorgente stati: bucket da frozenlake_qstates_{map}_slippery_seed{seed}.pkl
+- Sorgente stati: bucket da frozenlake_qstates_{map}_slippery_seed{seed}.json
   (default bottleneck: goal_entry + on-policy radi + 1-ring con quota H)
-  + grafo frozenlake_mdp_{map}_slippery_seed{seed}.pkl per mappe s e outcome s'
+  + grafo frozenlake_mdp_{map}_slippery_seed{seed}.json per mappe s e outcome s'
 - Prompt: Q* via media pesata -> Q*(s,a)=Σ p(s',r|s,a)[r+γV*(s')] con 4 azioni
   (left/down/right/up); ogni <a> contiene <expected> (esito voluto) + <alternative>
   (slip) con mappe s' (p da <documentation> success_rate, mai scritte, NON inferire)
@@ -48,6 +48,7 @@ except ImportError:
 
 from graph.frozenlake_mdp_graph import load_or_build as load_mdp
 from graph.frozenlake_qlearning_states import get_qstates_paths, load_qstates
+from paths import CACHE_DIR, LLM_DIR
 
 # ---------------------------------------------------------------------------
 # Config — plumbing come query_gpt.py (doorkey/Ollama)
@@ -89,7 +90,7 @@ def get_output_paths(
     out_dir: Path | str | None = None,
 ):
     if out_dir is None:
-        out_dir = Path(__file__).parent.parent / "graph" / "data"
+        out_dir = LLM_DIR
     else:
         out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -103,7 +104,7 @@ _FROZEN_STATES_RE = re.compile(
 
 
 def _resolve_states_path(states_path, map_name, seed, model_id=MODEL_ID):
-    """--path: file .pkl stati. map/slip/seed derivati dal nome salvo espliciti."""
+    """--path: file .json stati. map/slip/seed derivati dal nome salvo espliciti."""
     p = Path(states_path)
     m = _FROZEN_STATES_RE.match(p.stem)
     is_slippery = True
@@ -467,15 +468,15 @@ def run(
     states_path: Path | str | None = None,
     bucket: str | None = None,
 ):
-    data_dir = Path(__file__).parent.parent / "graph" / "data"
+    data_dir = CACHE_DIR
     if states_path is not None:
-        qstates_pkl, map_name, is_slippery, seed, out_json = _resolve_states_path(
+        qstates_json, map_name, is_slippery, seed, out_json = _resolve_states_path(
             states_path, map_name, seed, model_id
         )
-        if not qstates_pkl.exists():
-            print(f"ERRORE: stati non trovato {qstates_pkl}.")
+        if not qstates_json.exists():
+            print(f"ERRORE: stati non trovato {qstates_json}.")
             return
-        qdata = load_qstates(qstates_pkl)
+        qdata = load_qstates(qstates_json)
         mdp = load_mdp(
             seed=seed,
             map_name=map_name,
@@ -493,16 +494,16 @@ def run(
             is_slippery=True,
             out_dir=out_dir if out_dir else data_dir,
         )
-        qstates_pkl, _ = get_qstates_paths(
+        qstates_json = get_qstates_paths(
             map_name, True, seed, out_dir if out_dir else data_dir
         )
-        if not qstates_pkl.exists():
+        if not qstates_json.exists():
             print(
-                f"ERRORE: qstates non trovato {qstates_pkl}. "
+                f"ERRORE: qstates non trovato {qstates_json}. "
                 f"Esegui prima graph.frozenlake_qlearning_states"
             )
             return
-        qdata = load_qstates(qstates_pkl)
+        qdata = load_qstates(qstates_json)
 
     wanted = [bucket] if bucket else list(BUCKETS_WANTED)
     for b in wanted:

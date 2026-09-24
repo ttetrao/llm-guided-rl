@@ -4,7 +4,7 @@ MDP completo deterministico per MiniGrid-DoorKey (6/8/16).
 
 - Estrae il grafo da env gymnasium con seed (seed nel nome file)
 - Per ogni nodo: info MDP + mappa ASCII + x,y espliciti
-- Salva pickle (veloce) + json (leggibile), oppure carica se esiste
+- Salva/carica solo json (niente pickle), con tipi nativi ricostruiti al load
 - Accesso indicizzato O(1) via dict state->id
 
 Ispirato a bak/scripts/state_export2.py per transizioni/stage/value.
@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import pickle
 import sys
 from pathlib import Path
 
@@ -35,6 +34,7 @@ if str(_SRC) not in sys.path:
 
 import gymnasium as gym
 from env.view_wrapper import Stage, DoorKeyViewSystem
+from paths import CACHE_DIR
 
 # ---------------------------------------------------------------------------
 # Costanti
@@ -350,16 +350,16 @@ def build_mdp(seed: int = 1337, size: int = 8, gamma: float = GAMMA) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Persistenza duale pickle + json
+# Persistenza solo json (niente pickle)
 # ---------------------------------------------------------------------------
-def get_paths(seed: int = 1337, size: int = 8, out_dir: Path | str | None = None) -> tuple[Path, Path]:
+def get_paths(seed: int = 1337, size: int = 8, out_dir: Path | str | None = None) -> Path:
+    """Ritorna il path del json per (seed,size). Default: src/output/cache/."""
     if out_dir is None:
-        out_dir = Path(__file__).parent / "data"
+        out_dir = CACHE_DIR
     else:
         out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    base = f"mdp_{size}x{size}_seed{seed}"
-    return out_dir / f"{base}.pkl", out_dir / f"{base}.json"
+    return out_dir / f"mdp_{size}x{size}_seed{seed}.json"
 
 
 def _to_jsonable(mdp: dict) -> dict:
@@ -425,34 +425,97 @@ def _to_jsonable(mdp: dict) -> dict:
     }
 
 
-def save_mdp(mdp: dict, pkl_path: Path, json_path: Path):
-    pkl_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(pkl_path, "wb") as f:
-        pickle.dump(mdp, f, protocol=pickle.HIGHEST_PROTOCOL)
-    # json human-readable
-    j = _to_jsonable(mdp)
+def _parse_bool(v) -> bool:
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, (int, float)):
+        return bool(v)
+    s = str(v).strip().lower()
+    return s in ("true", "1", "yes")
+
+
+def _from_jsonable(j: dict) -> dict:
+    """Ricostruisce i tipi nativi (tuple/set/chiavi int) dal json."""
+    gi = j["grid_info"]
+    grid_info = {
+        "w": int(gi["w"]),
+        "h": int(gi["h"]),
+        "key_pos": (int(gi["key_pos"][0]), int(gi["key_pos"][1])),
+        "door_pos": (int(gi["door_pos"][0]), int(gi["door_pos"][1])),
+        "goal_pos": (int(gi["goal_pos"][0]), int(gi["goal_pos"][1])),
+        "walls": {(int(a), int(b)) for a, b in gi["walls"]},
+        "start_pos": (int(gi["start_pos"][0]), int(gi["start_pos"][1])),
+        "start_dir": int(gi["start_dir"]),
+    }
+    nodes = []
+    for n in j["nodes"]:
+        st = n["state"]
+        state = (int(st[0]), int(st[1]), int(st[2]), _parse_bool(st[3]), _parse_bool(st[4]))
+        transitions = {}
+        for a, t in n["transitions"].items():
+            ns = t["next_state"]
+            transitions[int(a)] = {
+                "next_id": int(t["next_id"]),
+                "next_state": (int(ns[0]), int(ns[1]), int(ns[2]),
+                               _parse_bool(ns[3]), _parse_bool(ns[4])),
+                "reward": float(t["reward"]),
+                "done": bool(t["done"]),
+                "action_name": t["action_name"],
+            }
+        nodes.append({
+            "id": int(n["id"]),
+            "state": state,
+            "x": int(n["x"]),
+            "y": int(n["y"]),
+            "dir": int(n["dir"]),
+            "has_key": bool(n["has_key"]),
+            "door_open": bool(n["door_open"]),
+            "stage": n["stage"],
+            "is_terminal": bool(n["is_terminal"]),
+            "map": n["map"],
+            "v_value": float(n.get("v_value", 0.0)),
+            "transitions": transitions,
+        })
+    index = {}
+    for k, v in j["index"].items():
+        x, y, d, hk, do = k.split(",")
+        index[(int(x), int(y), int(d), _parse_bool(hk), _parse_bool(do))] = int(v)
+    adj = {int(k): [int(x) for x in v] for k, v in j["adj"].items()}
+    return {
+        "seed": int(j["seed"]),
+        "size": int(j["size"]),
+        "gamma": float(j["gamma"]),
+        "grid_info": grid_info,
+        "nodes": nodes,
+        "index": index,
+        "adj": adj,
+        "action_names": {int(k): v for k, v in j["action_names"].items()},
+    }
+
+
+def save_mdp(mdp: dict, json_path: Path):
+    json_path.parent.mkdir(parents=True, exist_ok=True)
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(j, f, indent=2, ensure_ascii=False)
+        json.dump(_to_jsonable(mdp), f, indent=2, ensure_ascii=False)
 
 
-def load_mdp(pkl_path: Path) -> dict:
-    with open(pkl_path, "rb") as f:
-        return pickle.load(f)
+def load_mdp(json_path: Path) -> dict:
+    with open(json_path, encoding="utf-8") as f:
+        return _from_jsonable(json.load(f))
 
 
 def load_or_build(seed: int = 1337, size: int = 8, out_dir: Path | str | None = None, force: bool = False, gamma: float = GAMMA) -> dict:
     """
-    Se esiste il pkl per (seed,size) e non force, carica; altrimenti costruisce e salva pkl+json.
+    Se esiste il json per (seed,size) e non force, carica; altrimenti costruisce e salva.
     Ritorna il dict MDP con accesso indicizzato.
     """
-    pkl_path, json_path = get_paths(seed, size, out_dir)
-    if pkl_path.exists() and not force:
-        print(f"[cache] carico {pkl_path}")
-        return load_mdp(pkl_path)
-    print(f"[build] MDP {size}x{size} seed={seed} -> {pkl_path}")
+    json_path = get_paths(seed, size, out_dir)
+    if json_path.exists() and not force:
+        print(f"[cache] carico {json_path}")
+        return load_mdp(json_path)
+    print(f"[build] MDP {size}x{size} seed={seed} -> {json_path}")
     mdp = build_mdp(seed, size, gamma)
-    save_mdp(mdp, pkl_path, json_path)
-    print(f"  salvato pkl: {pkl_path} ({pkl_path.stat().st_size/1024:.1f} KB)")
+    save_mdp(mdp, json_path)
     print(f"  salvato json: {json_path} ({json_path.stat().st_size/1024:.1f} KB)")
     print(f"  nodi: {len(mdp['nodes'])}  walls: {len(mdp['grid_info']['walls'])}")
     return mdp
@@ -466,7 +529,7 @@ def main():
     parser.add_argument("--seed", type=int, default=1337, help="seed ambiente (nel nome file)")
     parser.add_argument("--size", type=int, default=8, choices=[6, 8, 16], help="dimensione mappa (default 8)")
     parser.add_argument("--gamma", type=float, default=GAMMA, help="gamma incluso nel dump per completezza")
-    parser.add_argument("--out", type=str, default=None, help="cartella output (default graph/data)")
+    parser.add_argument("--out", type=str, default=None, help="cartella output (default src/output/cache)")
     parser.add_argument("--force", action="store_true", help="rigenera anche se esiste")
     parser.add_argument("--show", type=int, default=2, help="quante mappe di esempio stampare")
     args = parser.parse_args()
