@@ -48,5 +48,5 @@ python3 -m evaluate.evaluate_llm
 ### 4. Esecuzione Agenti e Grafici di Confronto
 Per avviare l'addestramento degli agenti tabellari e creare i plot di paragone delle prestazioni:
 ```bash
-python3 -m agent.doorkey_qtable_llminit2
+python3 -m agent.doorkey_qtable_llminit
 ```

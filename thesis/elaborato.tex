@@ -53,7 +53,7 @@ Il pacchetto \path{src/agent/} esegue il Q-learning e gestisce i controlli.
 Il pacchetto \path{src/env/} contiene gli adattatori per l'ambiente e definisce le fasi.
 Il pacchetto \path{src/docs/} raccoglie le istruzioni testuali per i modelli.
 
-Il modulo \path{src/paths.py} gestisce le destinazioni di salvataggio. I dati finiscono sotto \path{src/output/}. La cartella \path{cache} conserva i grafi. La cartella \path{llm} ospita le risposte dei modelli. La cartella \path{agents} raccoglie i dati degli addestramenti. Le cartelle \path{evaluate} contengono i grafici di riepilogo. Il file \path{src/agent/doorkey_qtable_llminit2.py} produce i confronti diretti. I documenti di tesi risiedono in \path{thesis/}.
+Il modulo \path{src/paths.py} gestisce le destinazioni di salvataggio. I dati finiscono sotto \path{src/output/}. La cartella \path{cache} conserva i grafi. La cartella \path{llm} ospita le risposte dei modelli. La cartella \path{agents} raccoglie i dati degli addestramenti. Le cartelle \path{evaluate} contengono i grafici di riepilogo. Il file \path{src/agent/doorkey_qtable_llminit.py} produce i confronti diretti. I documenti di tesi risiedono in \path{thesis/}.
 
 \section{L'ambiente e il valore ottimo}\label{sec:ambiente}
 Il progetto utilizza l'ambiente \path{MiniGrid-DoorKey-8x8-v0} \cite{minigrid2023}. Le regole sono originali. L'agente raccoglie la chiave. L'agente apre la porta con l'azione \path{toggle}. L'agente raggiunge l'obiettivo in coordinate (6,6). La ricompensa vale 1 solo sul bersaglio. La ricompensa vale 0 in ogni altra cella. Il limite massimo di passi \`e 450.
