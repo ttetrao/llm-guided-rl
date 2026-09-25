@@ -1,0 +1,6 @@
+gruppo,TTTep_llm@0.8,TTTep_llm@0.9,TTTsteps_llm@0.8,TTTsteps_llm@0.9,TTTep_vsame@0.8,TTTep_vsame@0.9,TTTsteps_vsame@0.8,TTTsteps_vsame@0.9,TTTep_vstd@0.8,TTTep_vstd@0.9,TTTsteps_vstd@0.8,TTTsteps_vstd@0.9,sp_ep_same@0.8,sp_ep_same@0.9,sp_ep_std@0.8,sp_ep_std@0.9,sp_steps_same@0.8,sp_steps_same@0.9,sp_steps_std@0.8,sp_steps_std@0.9,AUC_llm,AUC_vsame,AUC_vstd,eval_llm,eval_vsame,eval_vstd
+frozenlake_qtable_llminit_8x8_slippery_seed_1337_gemma-4-26b-a4b-it,2553,2572,109048,109395,4490,5381,209359,259385,5499,6917,304077,397800,1.76,2.09,2.15,2.69,1.92,2.37,2.79,3.64,0.682,0.473,0.482,1.0,1.0,1.0
+frozenlake_qtable_llminit_8x8_slippery_seed_1337_gpt-oss_120b,1116,1266,33465,36103,2165,2194,47145,47560,3582,3594,180695,181128,1.94,1.73,3.21,2.84,1.41,1.32,5.4,5.02,0.713,0.519,0.275,1.0,1.0,1.0
+qtable_llminit_multiseed_train13507-19920-32455-54937-69693_evalin13507_evalnew6499,1019,1081,390794,400516,,,,,,,,,inf,inf,inf,inf,inf,inf,inf,inf,0.775,0.05,0.003,1.0,0.0,0.0
+qtable_llminit_multiseed_train13507-19920-32455-54937-69693_evalin13507_evalnew69694,2177,3672,919915,1152623,,,,,,,,,inf,inf,inf,inf,inf,inf,inf,inf,0.538,0.122,0.132,1.0,0.0,0.0
+qtable_llminit_seed_1337_gpt-oss_120b,492,503,186860,187013,,,,,1308,1318,546119,546292,inf,inf,2.66,2.62,inf,inf,2.92,2.92,0.758,0.022,0.365,1.0,0.0,1.0

@@ -16,6 +16,31 @@ Il dettaglio teorico, la metodologia e i risultati completi sono descritti nel d
 Puoi consultare il file compilato in: [`thesis/elaborato.pdf`](thesis/elaborato.pdf).
 Il codice sorgente dell'agente, della valutazione e della generazione dei grafi risiede all'interno della directory `src/`.
 
+## Installazione
+
+L'ambente di lavoro è Python 3.10. Le dipendenze si installano con conda; i due client LLM richiedono poi `pip`.
+
+```bash
+conda create -n llm-guided-rl python=3.10 -y
+conda activate llm-guided-rl
+conda install -c conda-forge numpy pandas matplotlib scipy gymnasium minigrid -y
+pip install ollama
+pip install "monorepo @ git+https://github.com/e-zorzi/monorepo"
+```
+
+| Pacchetto | Serve per |
+| --- | --- |
+| `numpy` | grafo MDP, Q-table, metriche |
+| `pandas` | `evaluate/`: aggregazione per stato, bucket e azione |
+| `matplotlib` | grafici in `evaluate/` e `agent/` (backend `Agg`, senza schermo) |
+| `scipy` | `pearsonr` e `spearmanr` in `evaluate/` |
+| `gymnasium` | ambienti `MiniGrid-DoorKey-8x8-v0` e `FrozenLake-v1` |
+| `minigrid` | registrazione degli env MiniGrid e wrapper di rendering |
+| `ollama` (pip) | `llm.query_gpt` contro Ollama Cloud |
+| `monorepo` (pip) | `llm.query_gpt` / `llm.query_gemma` e lettura delle API key |
+
+Note: `monorepo` non è su conda-forge e la versione omonima su PyPI non è quella del progetto, quindi va installata dal repository. `pygame` serve solo per aprire finestre di rendering: il codice usa il backend `Agg` e funziona senza. Le interrogazioni all'LLM richiedono credenziali (`monorepo.load_api_keys()`, oppure `OLLAMA_API_KEY` e `OLLAMA_HOST` per Ollama); senza chiave i moduli partono comunque in `--dry-run`.
+
 ## Comandi per generare i file
 
 Il codice è organizzato in pacchetti python e va eseguito partendo dalla directory `src/`.
