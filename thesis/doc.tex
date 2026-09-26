@@ -185,7 +185,7 @@ Il codice sorgente per l'agente \`e \path{src/agent/doorkey_qtable_llminit.py}. 
 
 La funzione \path{optimal_policy_metrics} dal file \path{src/agent/doorkey_qtable_llminit.py} confronta le scelte dell'agente con la soluzione calcolata a priori. La prima metrica è l'accordo con la politica ottima, conteggiato con regole che considerano i pareggi. La seconda è la perdita media di valore rispetto a $V^*$. Queste misure vengono calcolate sui nodi incontrati durante le valutazioni.
 
-Il run principale usa 2000 episodi, $\alpha=0.04$, $\gamma=0.95$, decadimento dell'esplorazione 0.99 e 20 coppie stato-azione iniziali. I risultati finali della valutazione greedy su 100 episodi sono:
+Il run principale usa 2000 episodi, $\alpha=0.04$, $\gamma=0.99$, decadimento dell'esplorazione 0.99 e 20 coppie stato-azione iniziali. I risultati finali della valutazione greedy su 100 episodi sono:
 \begin{itemize}
 \item LLM-init: SR=1.00, 13 passi medi, accordo 0.576 e perdita di valore 0.0068.
 \item Vanilla (same hp): SR=1.00, 16 passi medi, accordo 0.527 e perdita di valore 0.0075.

@@ -472,6 +472,20 @@ def std_hp(args):
             "eps_decay": args.std_eps_decay, "eps_min": args.std_eps_min}
 
 
+def std_hp_flag(args):
+    """--std_hp: i 4 hp della run Vanilla-std a STD in un colpo.
+
+    Sovrascrive i --std-* (WARN se dati entrambi); senza flag non tocca nulla.
+    """
+    if not args.std_hp:
+        return
+    overridden = [n for n in STD if getattr(args, f"std_{n}") != STD[n]]
+    if overridden:
+        print(f"WARN: --std_hp sovrascrive --std-* per {overridden}")
+    for n, v in STD.items():
+        setattr(args, f"std_{n}", v)
+
+
 def plot_pairs(runs, stem, base_title, args, seed, input_path):
     """Due PNG _vs_std / _vs_samehp da runs [{label,hist,ev,opt,hp,n_init}].
 
@@ -500,6 +514,7 @@ def save_run(agent, hist, ev, args, name, label, file_seed, seed, einfo,
           "eps_min": args.eps_min, "max_steps": args.max_steps,
           "eval_episodes": args.eval_episodes,
           "max_init": args.max_init,
+          "std_hp": bool(getattr(args, "std_hp", False)),
           "init_order": "bottleneck_first_top_v"}
     payload = {
         "algo": "qtable_llminit", "seeds": einfo.get("seeds", [file_seed]),
@@ -600,6 +615,10 @@ def main():
                     help="eps_decay del Vanilla-std (default standard single-seed)")
     ap.add_argument("--std-eps-min", type=float, default=STD["eps_min"], dest="std_eps_min",
                     help="eps_min del Vanilla-std (default standard single-seed)")
+    ap.add_argument("--std_hp", action="store_true",
+                    help="hp della run Vanilla-std = STD in un colpo "
+                         f"({STD['alpha']}/{STD['gamma']}/{STD['eps_decay']}/"
+                         f"{STD['eps_min']}); sovrascrive i --std-*")
     ap.add_argument("--seed", type=int, default=None,
                     help="seed singolo per train ed eval "
                          "(default: quello del file input; con input multi-seed "
@@ -642,6 +661,9 @@ def main():
                     help="deprecated, ignored")
     ap.add_argument("--selfcheck", action="store_true")
     args = ap.parse_args()
+    std_hp_flag(args)
+    if args.std_hp:
+        print(f"Vanilla-std hparametri (STD): {std_hp(args)}")
 
     input_path = resolve_input(args.input)
     file_seeds, qinit, einfo = load_qinit(input_path, args.max_init)
@@ -726,11 +748,26 @@ def main():
                                        std_eps_decay=0.5,
                                        std_eps_min=0.01)) == {
             "alpha": 0.1, "gamma": 0.9, "eps_decay": 0.5, "eps_min": 0.01}
+        # --std_hp: STD in un colpo, e vince sui --std-*
+        base = SimpleNamespace(std_hp=True, std_alpha=STD["alpha"],
+                               std_gamma=STD["gamma"],
+                               std_eps_decay=STD["eps_decay"],
+                               std_eps_min=STD["eps_min"])
+        std_hp_flag(base)
+        assert std_hp(base) == STD, std_hp(base)
+        mixed = SimpleNamespace(**{**vars(base), "std_alpha": 0.5})
+        std_hp_flag(mixed)
+        assert std_hp(mixed) == STD, std_hp(mixed)
+        off = SimpleNamespace(**{**vars(mixed), "std_hp": False,
+                                 "std_alpha": 0.5, "std_eps_decay": 0.5})
+        std_hp_flag(off)
+        assert std_hp(off) == {"alpha": 0.5, "gamma": STD["gamma"],
+                               "eps_decay": 0.5, "eps_min": STD["eps_min"]}
         assert [(a, b, s) for a, b, s in PAIRS] == [
             ("LLM-init", "Vanilla-std", "_vs_std"),
             ("LLM-init", "Vanilla (same hp)", "_vs_samehp")]
         print("Selfcheck OK (formula classica, init assegnata, "
-              "seed deterministico, metriche ottimalità)")
+              "seed deterministico, metriche ottimalità, --std_hp)")
         return
 
     env = DoorKeyViewSystem(gym.make("MiniGrid-DoorKey-8x8-v0"))
