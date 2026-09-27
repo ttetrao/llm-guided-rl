@@ -23,7 +23,6 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 import numpy as np
-import gymnasium as gym
 from graph.frozenlake_mdp_graph import get_paths as get_mdp_paths, load_or_build
 from paths import CACHE_DIR
 
@@ -274,7 +273,6 @@ def train_until_convergence(
         out_dir=out_dir,
         gamma=gamma,
     )
-    nS = int(mdp["nS"])
     nA = int(mdp["nA"])
     agent = QLearningAgent(
         n_actions=nA,
@@ -288,8 +286,6 @@ def train_until_convergence(
     buckets_all: dict[str, set] = {k: set() for k in BUCKETS}
     total_episodes = 0
     final_greedy = 0.0
-    # RNG seedato per sampling slip, preserva non-determinismo ma riproducibile con seed=1337
-    master_rng = random.Random(seed)
     for ep in range(max_episodes):
         s = 0  # start S sempre 0
         visited = [int(s)]

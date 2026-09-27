@@ -18,8 +18,3 @@ LLM_DIR = OUTPUT_DIR / "llm"
 AGENTS_DIR = OUTPUT_DIR / "agents"
 EVAL_DIR = OUTPUT_DIR / "evaluate"
 EVAL_FL_DIR = OUTPUT_DIR / "evaluate_frozenlake"
-
-
-def ensure_dirs() -> None:
-    for d in (CACHE_DIR, LLM_DIR, AGENTS_DIR, EVAL_DIR, EVAL_FL_DIR):
-        d.mkdir(parents=True, exist_ok=True)

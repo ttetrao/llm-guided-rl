@@ -91,7 +91,6 @@ BUCKET_COLORS = {"iniziale": "#0072B2", "intermedio": "#E69F00", "avanzato": "#0
 _FALLBACK_COLORS = ("#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#999999")
 # FrozenLake ha 4 azioni
 ACTION_ORDER = ["left", "down", "right", "up"]
-ACTION_COLORS = {"left": "#0072B2", "down": "#E69F00", "right": "#009E73", "up": "#CC79A7"}
 
 DEFAULT_GAMMA = 0.99
 TIE_EPS_DEFAULT = 1e-6     # tolleranza per considerare due valori pari merito

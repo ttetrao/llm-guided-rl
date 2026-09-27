@@ -1,6 +1,5 @@
 import gymnasium as gym
 from typing import cast
-from minigrid.core.grid import Grid
 from minigrid.minigrid_env import MiniGridEnv
 
 
@@ -35,11 +34,3 @@ def goal_reached(env: gym.Env) -> bool:
                 if ax == x and ay == y:
                     return True
     return False
-
-
-def get_events(env: gym.Env) -> dict[str, bool]:
-    return {
-        "has_key": has_key(env),
-        "door_open": door_is_open(env),
-        "goal_reached": goal_reached(env),
-    }

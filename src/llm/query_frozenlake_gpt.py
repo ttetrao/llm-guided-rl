@@ -562,7 +562,7 @@ def run(
             print(
                 f"  {code} [{b}] V*={node['v_value']} {qs} prompt len {len(prompt)} ~{len(prompt)//4} tokens"
             )
-        s0, b0 = to_query[0][1], to_query[0][0]
+        s0 = to_query[0][1]
         fake = json.dumps(
             [
                 {

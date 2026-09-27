@@ -434,9 +434,6 @@ def main():
                     assert crit.issubset(buck) or len(buck) == 0, f"critical non garantito in bucket {k}: {crit - buck}"
                 else:
                     assert buck.issubset(crit), f"con N<{len(crit)} bucket {k} deve essere solo crit ma got {buck - crit}"
-                # solo calpestati: critical è già & buckets_all, verifica
-                if "buckets_all_counts" in data:
-                    pass
     print("[self-check] OK")
     if "critical_counts" in data:
         print(f"critical_counts: {data['critical_counts']} | buckets_all_counts: {data.get('buckets_all_counts')}")

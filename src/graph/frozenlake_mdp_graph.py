@@ -22,7 +22,6 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 import gymnasium as gym
-from env.frozenlake_view_wrapper import FrozenLakeViewSystem
 from paths import CACHE_DIR
 
 GAMMA = 0.99
@@ -139,7 +138,6 @@ def build_mdp(seed=1337, map_name="8x8", is_slippery=True, desc=None, gamma=GAMM
 
     # grid_info for rendering
     # find special tiles
-    walls = set()  # frozenlake has no walls
     start_pos = (0, 0)
     goal_pos = (nrow-1, ncol-1)
     holes: list[tuple[int,int]] = []

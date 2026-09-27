@@ -31,7 +31,6 @@ import re
 import sys
 import time
 import threading
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, asdict
 from pathlib import Path

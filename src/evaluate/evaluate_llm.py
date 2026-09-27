@@ -90,8 +90,6 @@ BUCKET_COLORS = {"iniziale": "#0072B2", "intermedio": "#E69F00", "avanzato": "#0
                  "ckpt-0.7": "#F0E442", "ckpt-0.8": "#E69F00", "ckpt-1": "#D55E00"}
 _FALLBACK_COLORS = ("#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#999999")
 ACTION_ORDER = ["left", "right", "forward", "pickup", "drop", "toggle"]
-ACTION_COLORS = {"left": "#0072B2", "right": "#E69F00", "forward": "#009E73",
-                 "pickup": "#CC79A7", "drop": "#999999", "toggle": "#56B4E9"}
 
 DEFAULT_GAMMA = 0.99
 TIE_EPS_DEFAULT = 1e-6     # tolleranza per considerare due valori pari merito

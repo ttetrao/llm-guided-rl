@@ -132,7 +132,7 @@ def show_frozenlake(map_name: str, seed: int, llm: str | None, force: bool):
     from graph.frozenlake_mdp_graph import load_or_build
 
     mdp = load_or_build(seed=seed, map_name=map_name, force=force)
-    nrow, ncol = mdp["nrow"], mdp["ncol"]
+    ncol = mdp["ncol"]
     pat = str(LLM_DIR / "frozenlake_llm_*.json")
     vllm = _vllm_by_state(_load_llm_rows(llm, pat, seed), "state")
 

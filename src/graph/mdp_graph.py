@@ -8,7 +8,7 @@ MDP completo deterministico per MiniGrid-DoorKey (6/8/16).
 - Accesso indicizzato O(1) via dict state->id
 
 Ispirato a bak/scripts/state_export2.py per transizioni/stage/value.
-Legenda mappa in env/view_wrapper.py:151
+Legenda mappa in graph/README.md
 
 Uso:
     python -m graph.mdp_graph --seed 42 --size 8
@@ -40,11 +40,10 @@ from paths import CACHE_DIR
 # Costanti
 # ---------------------------------------------------------------------------
 DIRS = [(1, 0), (0, 1), (-1, 0), (0, -1)]  # R, D, L, U  -> 0,1,2,3
-ACTIONS = [0, 1, 2, 3, 4, 5]  # left, right, forward, pickup, drop, toggle (done 6 escluso)
 ACTIONS_ALL = [0, 1, 2, 3, 4, 5, 6]  # tutte le azioni MiniGrid (incl. done)
 ACTION_NAMES = {0: "left", 1: "right", 2: "forward", 3: "pickup", 4: "drop", 5: "toggle", 6: "done"}
 GAMMA = 0.99
-DIR_SYM = ["R", "D", "L", "U"]  # env/view_wrapper.py:161
+DIR_SYM = ["R", "D", "L", "U"]  # R, D, L, U -> 0,1,2,3
 
 
 # ---------------------------------------------------------------------------
@@ -191,18 +190,18 @@ def _value_iteration(gi, gamma=GAMMA, theta=1e-6, actions=None):
 
 # ---------------------------------------------------------------------------
 # Render mappa per stato arbitrario (senza mutare env)
-# replica env/view_wrapper.py:151 ma parametrica su state
+# rendering ASCII parametrico su state (non muta l'env)
 # ---------------------------------------------------------------------------
 def render_map(state, gi) -> str:
     """
     Ritorna la mappa ASCII per lo stato dato.
-    Legenda (env/view_wrapper.py + richiesta):
+    Legenda (richiesta):
       A(U/D/R/L)=agent, L(U/D/R/L)=agent con chiave,
       K=key, G=goal, ▇=wall, D(L)=door locked / D(C) alias, D(O)=door open
-    Nota: view_wrapper usa D(C) per locked, richiesta usa D(L);
-          qui si usa D(C) per compatibilità con view_wrapper, ma D(L) è alias
-          (entrambi indicano locked). Per aderire strettamente alla legenda
-          della richiesta, sostituire \"D(C)\" con \"D(L)\" sotto.
+    Nota: qui si usa D(C) per locked (lo storico rendering ASCII del progetto
+          usava D(C)); D(L) ne è alias, entrambi indicano locked. Per aderire
+          strettamente alla legenda della richiesta, sostituire \"D(C)\" con
+          \"D(L)\" sotto.
     """
     x, y, d, has_key, door_open = state
     ax, ay = x, y

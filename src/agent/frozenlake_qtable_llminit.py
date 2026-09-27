@@ -26,7 +26,6 @@ from collections import defaultdict
 from types import SimpleNamespace
 
 import numpy as np
-import gymnasium as gym
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))

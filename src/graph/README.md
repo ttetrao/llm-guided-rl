@@ -3,7 +3,7 @@
 Costruisce (o carica da cache) il grafo completo dell'MDP `MiniGrid-DoorKey-{size}x{size}-v0` con accesso indicizzato O(1) e mappa ASCII per nodo.
 
 * Ispirato a `bak/scripts/state_export2.py` per transizioni, stage e reward.
-* Mappa per nodo replica `env/view_wrapper.py:151` (legenda sotto).
+* Mappa per nodo replica `env/view_wrapper.py` (legenda sotto).
 
 ## Struttura
 
@@ -80,7 +80,7 @@ D(C)=door locked (alias D(L)), D(O)=door open
 Stage: find_key / open_door / reach_goal
 ```
 
-`x,y` del nodo coincidono con posizione `A()`/`L()` nella mappa. `D(C)` è alias di `D(L)` (closed=locked) per compatibilità con `view_wrapper.py:192` che usa `D(C)` vs `D(O)`.
+`x,y` del nodo coincidono con posizione `A()`/`L()` nella mappa. `D(C)` è alias di `D(L)` (closed=locked) per compatibilità con `mdp_graph.py:233` che usa `D(C)` vs `D(O)`.
 
 ## Cache
 
@@ -91,4 +91,4 @@ Stage: find_key / open_door / reach_goal
 ## Dettagli
 
 * Spazio stati: `valid_cells (non wall) ×4 dir ×2 has_key ×2 door_open` filtrato per `(x,y)==key` senza chiave e `(x,y)==door` senza porta aperta → ~480 nodi su 8x8, ~192 su 6x6, ~2912 su 16x16.
-* Basato su `state_export2.py:268 _get_next_state` e `view_wrapper.py:151 current_view`.
+* Basato su `state_export2.py:268 _get_next_state` e sul wrapper di rendering `env/view_wrapper.py`.

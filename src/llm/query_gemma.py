@@ -20,15 +20,12 @@ Uso:
 from __future__ import annotations
 
 import argparse
-import csv
 import json
-import os
 import random
 import re
 import sys
 import time
 import threading
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, asdict
 from pathlib import Path
