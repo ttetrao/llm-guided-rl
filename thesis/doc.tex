@@ -167,7 +167,7 @@ Le percentuali di selezione dell'azione sono aggregate sugli stati considerati; 
 \centering
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_accuracy.png}
 \includegraphics[width=0.48\textwidth]{../src/output/evaluate/grafici/llm_results_doorkey_states_8x8_seed1337_gpt-oss_120b_mae_bucket.png}
-\caption{Il pannello sinistro mostra la selezione Top-k aggregata sui 85 stati validi dello scenario di base: Top-1 tie-aware 94.1\%, Top-1 strict 84.7\%, Top-2 98.8\% e Top-3 98.8\%. Il pannello destro è un MAE per bucket, non un grafico Top-k: \texttt{bottleneck} 0.014, \texttt{ckpt-0.3} 0.014, \texttt{ckpt-0.8} 0.013, \texttt{ckpt-0.5} 0.010, \texttt{ckpt-0.7} 0.010 e \texttt{ckpt-1} 0.008. I due pannelli descrivono rispettivamente accuratezza dell'azione ed errore numerico.}
+\caption{Il pannello sinistro mostra la selezione Top-k aggregata sui 144 stati validi dello scenario di base: Top-1 tie-aware 96.5\%, Top-1 strict 87.5\%, Top-2 97.2\% e Top-3 97.2\%. Il pannello destro è un MAE per bucket, non un grafico Top-k: le barre sono in ordine di training, cioè da meno a più step di addestramento, con \texttt{bottleneck} 0.0157, \texttt{ckpt-0.3} 0.0165, \texttt{ckpt-0.5} 0.0124, \texttt{ckpt-0.7} 0.0156, \texttt{ckpt-0.8} 0.0124 e \texttt{ckpt-1} 0.0148. I due pannelli descrivono rispettivamente accuratezza dell'azione ed errore numerico.}
 \label{fig:acc1337}
 \end{figure}
 

@@ -13,7 +13,8 @@ v3 (correzioni):
     maschera costruita con np.broadcast_to.
   - FIX LAYOUT: legende spostate FUORI dall'area dati (bbox_to_anchor a destra),
     box statistiche SOTTO l'asse x: non coprono più punti/barre.
-    Nel plot accuratezza la legenda "random" è un'annotazione sulla linea.
+    Nel plot accuratezza niente linea "random": 1/n azioni è sotto il vero
+    chance level della metrica tie-aware.
 
 v2 (design):
   1. Filtro per STATO (non per riga): uno stato è fallito solo se TUTTE le
@@ -90,6 +91,32 @@ BUCKET_COLORS = {"iniziale": "#0072B2", "intermedio": "#E69F00", "avanzato": "#0
                  "ckpt-0.7": "#F0E442", "ckpt-0.8": "#E69F00", "ckpt-1": "#D55E00"}
 _FALLBACK_COLORS = ("#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#999999")
 ACTION_ORDER = ["left", "right", "forward", "pickup", "drop", "toggle"]
+
+
+def bucket_key(b):
+    """Ordine di training dei bucket: ckpt-<soglia> crescente, i bucket non-ckpt in fondo.
+
+    La soglia di success rate del bucket coincide con l'ordine dei checkpoint: nel pilota
+    Q-learning le soglie (0.3, 0.5, 0.7, 0.8, 1.0) vengono attraversate in quel ordine, quindi
+    ordinarle per numero equivale a ordinarle per step di addestramento. 'bottleneck' non è un
+    checkpoint (è il pool degli stati difficili) e va tenuto fuori dal trend.
+    """
+    s = str(b)
+    if s.startswith("ckpt-"):
+        try:
+            return (1, float(s[5:]))
+        except ValueError:
+            pass
+    return (0, 0.0)
+
+
+def _ckpt_order(series):
+    """Riordina una Series indicata per bucket nell'ordine di training.
+
+    reindex(sorted(...)) invece di sort_index(key=...): pandas rifiuta chiavi che
+    cambiano la shape dell'array, e bucket_key restituisce coppie.
+    """
+    return series.reindex(sorted(series.index, key=bucket_key))
 
 DEFAULT_GAMMA = 0.99
 TIE_EPS_DEFAULT = 1e-6     # tolleranza per considerare due valori pari merito
@@ -418,8 +445,8 @@ def compute_value_metrics(df, gamma):
     # per bucket / action / stage
     dfa = df.assign(err=err, abs_err=abs_err, sq_err=sq_err)
     if "bucket" in dfa.columns and dfa["bucket"].notna().any():
-        m["mae_by_bucket"] = dfa.groupby("bucket")["abs_err"].mean().sort_values(ascending=False)
-        m["rmse_by_bucket"] = dfa.groupby("bucket")["sq_err"].mean().apply(np.sqrt).sort_values(ascending=False)
+        m["mae_by_bucket"] = _ckpt_order(dfa.groupby("bucket")["abs_err"].mean())
+        m["rmse_by_bucket"] = _ckpt_order(dfa.groupby("bucket")["sq_err"].mean().apply(np.sqrt))
         m["bias_by_bucket"] = dfa.groupby("bucket")["err"].mean()
         m["count_by_bucket"] = dfa["bucket"].value_counts()
     else:
@@ -518,7 +545,7 @@ def compute_action_metrics(df, tie_eps=TIE_EPS_DEFAULT):
         "mean_value_loss": float(df_act["value_loss"].mean()),
         "mean_value_loss_best": float(df_act["value_loss_best"].mean()),
         "tie_rate": float(df_act["llm_tie"].mean()),
-        "acc_by_bucket": df_act.groupby("bucket")["match"].mean(),
+        "acc_by_bucket": _ckpt_order(df_act.groupby("bucket")["match"].mean()),
         "acc_by_stage": df_act.groupby("stage")["match"].mean(),
         "cm": pd.crosstab(df_act["optimal_action"], df_act["llm_action"]),
         "per_action": df_act.groupby("optimal_action")["match"].agg(["mean", "count"]),
@@ -705,8 +732,6 @@ def plot_k_error(metrics, gamma, title, path):
 def plot_action_acc(act, title, path):
     if act["n_states"] == 0:
         return
-    n_actions = len(ACTION_ORDER)
-    rand = 1 / n_actions
     labels = ["Top-1\n(tie-aware)", "Top-1\n(strict)", "Top-2", "Top-3"]
     vals = [act["accuracy"], act["accuracy_strict"], act["top2"], act["top3"]]
     colors = ["#0072B2", "#999999", "#009E73", "#56B4E9"]
@@ -716,11 +741,8 @@ def plot_action_acc(act, title, path):
     for bar, v in zip(bars, vals):
         ax.text(bar.get_x() + bar.get_width() / 2, (v if np.isfinite(v) else 0) + 0.02,
                 f"{v*100:.1f}%", ha="center", va="bottom", fontsize=11, fontweight="bold")
-    # linea random ANNOTATA sulla linea stessa (niente legenda che copre le barre)
-    ax.axhline(rand, color="#666666", linestyle="--", lw=1.2, alpha=0.85, zorder=2)
-    ax.text(1.0, rand + 0.018, f"random {rand*100:.1f}%",
-            transform=ax.get_yaxis_transform(),  # x in coord. assi, y in coord. dati
-            ha="right", va="bottom", fontsize=8, color="#666666")
+    # niente linea "random": 1/n azioni non è il chance level della metrica
+    # tie-aware (con ottimi multipli un tiro uniforme indovina con p = 1/|ottimi| > 1/n)
     ax.set_ylim(0, 1.12); ax.set_ylabel("accuratezza")
     ax.set_title(title, loc="left", fontsize=13, pad=12, fontweight="bold")
     ax.set_yticks(np.linspace(0, 1, 6))
@@ -741,7 +763,7 @@ def plot_mae_rmse_bucket(metrics, tag, gdir, title_tag=None):
     if mb is None or rb is None or mb.empty:
         return
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
-    fig.suptitle(f"Errore per bucket — {tt}", fontsize=13, fontweight="bold")
+    fig.suptitle(f"Errore per bucket (ordine di training) — {tt}", fontsize=13, fontweight="bold")
     for ax, data, ylabel, title in [(axes[0], mb, "MAE", "MAE per bucket"),
                                     (axes[1], rb, "RMSE", "RMSE per bucket")]:
         colors = [BUCKET_COLORS.get(k, "#6A6A6A") for k in data.index]
@@ -762,7 +784,7 @@ def plot_mae_rmse_bucket(metrics, tag, gdir, title_tag=None):
     for bar, v in zip(ax.patches[:len(mb)], mb.values):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.001, f"{v:.3f}",
                 ha="center", va="bottom", fontsize=9, fontweight="bold")
-    ax.set_title(f"MAE per bucket — {tt}", loc="left", fontsize=13, pad=12, fontweight="bold")
+    ax.set_title(f"MAE per bucket (ordine di training) — {tt}", loc="left", fontsize=13, pad=12, fontweight="bold")
     ax.set_ylabel("MAE", fontsize=10)
     ax.set_ylim(0, max(mb.values) * 1.22 if len(mb) and max(mb.values) > 0 else 1)
     ax.grid(True, axis="y", alpha=0.22, linestyle=":", linewidth=0.6); _despine(ax)
@@ -1052,4 +1074,6 @@ def main():
 
 
 if __name__ == "__main__":
+    _t = pd.Series(range(6), index=["bottleneck", "ckpt-0.8", "ckpt-0.3", "ckpt-0.5", "ckpt-0.7", "ckpt-1"])
+    assert list(_ckpt_order(_t).index) == ["bottleneck", "ckpt-0.3", "ckpt-0.5", "ckpt-0.7", "ckpt-0.8", "ckpt-1"]
     main()

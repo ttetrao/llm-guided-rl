@@ -1,12 +1,12 @@
 ======================================================================
 VALUTAZIONE LLM FrozenLake slippery (Q* stocastico) — v3
 corrispettivo di evaluate_llm.py per FrozenLake | 4 azioni | filtro per stato | argmax tie-aware | regret | Δk
-Generato 2026-09-27 21:40:38
-Sorgente src/output/llm files=2
+Generato 2026-09-28 16:39:29
+Sorgente output/llm files=2
 ======================================================================
 
 ----------------------------------------------------------------------
-FILE: src/output/llm/frozenlake_llm_8x8_slippery_q_seed1337_gemma-4-26b-a4b-it.json (mtime 2026-09-19 12:57:01, righe file 72)
+FILE: output/llm/frozenlake_llm_8x8_slippery_q_seed1337_gemma-4-26b-a4b-it.json (mtime 2026-09-27 21:52:36, righe file 72)
 Gamma: 0.99 (cli) — on-grid v_true=79.2%, v_llm=51.4%
 Stati: totali=18  falliti (v_llm=0 su tutte le azioni)=0 (0.0%)  validi=18
 Righe: stime valide=72  v_llm=0/nan in stati validi=0
@@ -29,7 +29,7 @@ Valori per action:
   left       MAE=0.3304 RMSE=0.3644
 
 ----------------------------------------------------------------------
-FILE: src/output/llm/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b.json (mtime 2026-09-19 12:17:29, righe file 76)
+FILE: output/llm/frozenlake_llm_8x8_slippery_q_seed1337_gpt-oss_120b.json (mtime 2026-09-27 21:52:36, righe file 76)
 Gamma: 0.99 (cli) — on-grid v_true=80.3%, v_llm=67.1%
 Stati: totali=19  falliti (v_llm=0 su tutte le azioni)=0 (0.0%)  validi=19
 Righe: stime valide=76  v_llm=0/nan in stati validi=0
